@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>交通需要予測シミュレーター</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      padding: 12px;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .main-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+    }
+    .sub-title {
+      font-size: 11px;
+      color: #888888;
+      margin-top: 1px;
+    }
+    .btn-debug-toggle {
+      background: #252525;
+      color: #bbbbbb;
+      border: 1px solid #3a3a3a;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-debug-toggle:active {
+      background: #333333;
+    }
+
+    .card {
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .card-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #dddddd;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .input-label {
+      font-size: 10px;
+      color: #999999;
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      background: #282828;
+      border: 1px solid #383838;
+      color: #ffffff;
+      padding: 7px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+    input[type="text"].mode-name-field {
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed #555555;
+      border-radius: 0;
+      padding: 2px 4px;
+      font-size: 13px;
+      width: 110px;
+    }
+    input:focus {
+      border-color: #3b82f6 !important;
+      outline: none;
+    }
+
+    /* モード設定カード */
+    .mode-item {
+      background: #242424;
+      border: 1px solid #303030;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .mode-item:last-child {
+      margin-bottom: 0;
+    }
+    .mode-item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #303030;
+    }
+
+    /* トグルスイッチ */
+    .switch-wrap {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+    .switch-wrap input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #444444;
+      transition: .2s;
+      border-radius: 20px;
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .switch-slider {
+      background-color: #2563eb;
+    }
+    input:checked + .switch-slider:before {
+      transform: translateX(16px);
+    }
+
+    /* アクションボタン */
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .btn-reset {
+      background: #282828;
+      color: #cccccc;
+      border: 1px solid #3a3a3a;
+      padding: 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-calc {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 11px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .btn-calc:active {
+      background: #1d4ed8;
+    }
+
+    /* サマリー結果 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .summary-card {
+      background: #242424;
+      border: 1px solid #303030;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .summary-title {
+      font-size: 10px;
+      color: #888888;
+      margin-bottom: 2px;
+    }
+    .summary-value {
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .val-blue { color: #60a5fa; }
+    .val-purple { color: #a78bfa; }
+
+    /* 帯グラフ */
+    .share-bar-container {
+      height: 18px;
+      background: #282828;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 12px;
+    }
+    .share-segment {
+      height: 100%;
+      transition: width 0.2s ease-out;
+    }
+
+    /* テーブル */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    th {
+      text-align: left;
+      color: #888888;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #303030;
+      font-weight: 600;
+    }
+    td {
+      padding: 7px 0;
+      border-bottom: 1px solid #242424;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .color-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <div class="header-bar">
+    <div>
+      <div class="main-title">交通需要予測シミュレーター</div>
+      <div class="sub-title">パターンCモデル (γ=0.90 / Logsum統合)</div>
+    </div>
+    <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ</button>
+  </div>
+
+  <!-- デバッグ設定 (折りたたみ) -->
+  <div id="debugPanel" class="card hidden" style="border-color: #2563eb;">
+    <div class="card-header" style="color: #60a5fa;">モデル定数の調整</div>
+    <div class="grid-4">
+      <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040"></div>
+      <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90"></div>
+      <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90"></div>
+      <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.05"></div>
+    </div>
+  </div>
+
+  <!-- 都市ポテンシャル設定 -->
+  <div class="card">
+    <div class="card-header">都市ポテンシャル設定 (無単位)</div>
+    <div class="grid-2">
+      <div class="input-group">
+        <span class="input-label">起点都市ポテンシャル (p<sub>i</sub>)</span>
+        <input type="number" id="pi" value="100">
+      </div>
+      <div class="input-group">
+        <span class="input-label">終点都市ポテンシャル (p<sub>j</sub>)</span>
+        <input type="number" id="pj" value="80">
+      </div>
+    </div>
+  </div>
+
+  <!-- 交通モード設定 -->
+  <div class="card">
+    <div class="card-header">
+      <span>交通モード設定</span>
+      <span style="font-size: 10px; font-weight: normal; color: #777777;">スイッチで有効化</span>
+    </div>
+    <div id="modesContainer">
+      <!-- 画面読込時にJavaScriptで確実に生成されます -->
+    </div>
+  </div>
+
+  <!-- 操作ボタン -->
+  <div class="action-row">
+    <button class="btn-reset" onclick="resetDefaults()">↺ デフォルトに戻す</button>
+    <button class="btn-calc" onclick="calculate()">計算する</button>
+  </div>
+
+  <!-- 計算結果 -->
+  <div class="card">
+    <div class="card-header">計算結果</div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-title">総交通需要量 M<sub>total</sub></div>
+        <div class="summary-value val-blue" id="resMtotal">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
+        <div class="summary-value val-purple" id="resTeff">--</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 10px;">
+      <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600;">機関別市場シェア (%)</div>
+      <div class="share-bar-container" id="shareBar"></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>モード</th>
+          <th class="text-right">総合時間 T<sub>k</sub></th>
+          <th class="text-right">需要量 M<sub>k</sub></th>
+          <th class="text-right">シェア</th>
+        </tr>
+      </thead>
+      <tbody id="resTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // デフォルトの交通モード設定
+    const initialModes = [
+      { name: "のぞみ", travel: 150, access: 0, freq: 6.5, enabled: true, color: "#3b82f6" },
+      { name: "ひかり", travel: 180, access: 0, freq: 2, enabled: true, color: "#06b6d4" },
+      { name: "こだま", travel: 240, access: 0, freq: 2, enabled: true, color: "#10b981" },
+      { name: "航空機", travel: 70, access: 105, freq: 2, enabled: true, color: "#f59e0b" },
+      { name: "リニア", travel: 67, access: 20, freq: 5, enabled: false, color: "#ec4899" }
+    ];
+
+    let currentModes = JSON.parse(JSON.stringify(initialModes));
+
+    // モード入力欄を生成
+    function renderModeInputs() {
+      const container = document.getElementById("modesContainer");
+      if (!container) return;
+      
+      let html = "";
+      currentModes.forEach((m, idx) => {
+        html += `
+          <div class="mode-item">
+            <div class="mode-item-top">
+              <input type="text" value="${m.name}" class="mode-name-field" onchange="currentModes[${idx}].name=this.value">
+              <label class="switch-wrap">
+                <input type="checkbox" ${m.enabled ? 'checked' : ''} onchange="currentModes[${idx}].enabled=this.checked; calculate();">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="grid-3">
+              <div class="input-group">
+                <span class="input-label">乗車(分)</span>
+                <input type="number" value="${m.travel}" onchange="currentModes[${idx}].travel=Number(this.value)">
+              </div>
+              <div class="input-group">
+                <span class="input-label">アクセス(分)</span>
+                <input type="number" value="${m.access}" onchange="currentModes[${idx}].access=Number(this.value)">
+              </div>
+              <div class="input-group">
+                <span class="input-label">本数(本/h)</span>
+                <input type="number" step="0.5" value="${m.freq}" onchange="currentModes[${idx}].freq=Number(this.value)">
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // デバッグの表示切替
+    function toggleDebug() {
+      const panel = document.getElementById("debugPanel");
+      if (panel) panel.classList.toggle("hidden");
+    }
+
+    // デフォルト状態に戻す
+    function resetDefaults() {
+      document.getElementById("pi").value = 100;
+      document.getElementById("pj").value = 80;
+      document.getElementById("paramK").value = 0.040;
+      document.getElementById("paramAlpha").value = 0.90;
+      document.getElementById("paramGamma").value = 0.90;
+      document.getElementById("paramLambda").value = 0.05;
+      
+      currentModes = JSON.parse(JSON.stringify(initialModes));
+      renderModeInputs();
+      calculate();
+    }
+
+    // 需要・シェア計算
+    function calculate() {
+      const pi = Number(document.getElementById("pi").value) || 0;
+      const pj = Number(document.getElementById("pj").value) || 0;
+      const K = Number(document.getElementById("paramK").value) || 0.040;
+      const alpha = Number(document.getElementById("paramAlpha").value) || 0.90;
+      const gamma = Number(document.getElementById("paramGamma").value) || 0.90;
+      const lambda = Number(document.getElementById("paramLambda").value) || 0.05;
+
+      const activeModes = currentModes.filter(m => m.enabled && m.freq > 0);
+
+      const resMtotal = document.getElementById("resMtotal");
+      const resTeff = document.getElementById("resTeff");
+      const resTable = document.getElementById("resTable");
+      const shareBar = document.getElementById("shareBar");
+
+      if (activeModes.length === 0) {
+        if (resMtotal) resMtotal.innerText = "0.00";
+        if (resTeff) resTeff.innerText = "-- 分";
+        if (resTable) resTable.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666; padding:12px;">有効な交通モードがありません</td></tr>`;
+        if (shareBar) shareBar.innerHTML = "";
+        return;
+      }
+
+      let sumExp = 0;
+      const calculatedData = activeModes.map(m => {
+        const wait = 60 / (2 * m.freq);
+        const Tk = m.travel + m.access + wait;
+        const expV = Math.exp(-lambda * Tk);
+        sumExp += expV;
+        return { ...m, Tk, expV };
+      });
+
+      // Logsum T_eff & M_total 計算
+      const Teff = -Math.log(sumExp) / lambda;
+      const Mtotal = K * Math.pow(pi * pj, alpha) / Math.pow(Teff, gamma);
+
+      if (resMtotal) resMtotal.innerText = Mtotal.toFixed(2);
+      if (resTeff) resTeff.innerText = Teff.toFixed(1) + " 分";
+
+      let tableHtml = "";
+      let barHtml = "";
+
+      calculatedData.forEach(item => {
+        const share = (item.expV / sumExp) * 100;
+        const Mk = Mtotal * (share / 100);
+
+        tableHtml += `
+          <tr>
+            <td><span class="color-dot" style="background:${item.color}"></span><b>${item.name}</b></td>
+            <td class="text-right">${item.Tk.toFixed(1)}分</td>
+            <td class="text-right" style="color:#60a5fa; font-weight:bold;">${Mk.toFixed(2)}</td>
+            <td class="text-right" style="font-weight:bold;">${share.toFixed(1)}%</td>
+          </tr>
+        `;
+
+        if (share > 0) {
+          barHtml += `<div class="share-segment" style="width:${share}%; background-color:${item.color};" title="${item.name}: ${share.toFixed(1)}%"></div>`;
+        }
+      });
+
+      if (resTable) resTable.innerHTML = tableHtml;
+      if (shareBar) shareBar.innerHTML = barHtml;
+    }
+
+    // DOMロード時の即時初期化
+    document.addEventListener("DOMContentLoaded", function() {
+      renderModeInputs();
+      calculate();
+    });
+
+    // バックアップ用初期実行
+    renderModeInputs();
+    calculate();
+  </script>
+</body>
+</html>
