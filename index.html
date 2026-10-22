@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>交通需要予測シミュレーター ver2.0</title>
+  <title>交通需要予測シミュレーター ver3.0</title>
   <style>
     * {
       box-sizing: border-box;
@@ -49,7 +49,7 @@
       cursor: pointer;
     }
     .btn-debug-toggle:active { background: #333333; }
-    /* 設定保存・読み込みボタン */
+    
     .btn-config-action {
       background: #252525;
       color: #93c5fd;
@@ -80,6 +80,7 @@
     }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
 
     .input-group {
@@ -108,7 +109,6 @@
       outline: none;
     }
 
-    /* ボタン・操作系 */
     .btn-add {
       background: #1e3a8a;
       color: #93c5fd;
@@ -159,7 +159,6 @@
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
 
-    /* モード設定カード */
     .mode-item {
       background: #242424;
       border: 1px solid #303030;
@@ -176,7 +175,6 @@
       border-bottom: 1px solid #303030;
     }
 
-    /* スイッチ */
     .switch-wrap {
       position: relative;
       display: inline-block;
@@ -197,7 +195,6 @@
     input:checked + .switch-slider { background-color: #2563eb; }
     input:checked + .switch-slider:before { transform: translateX(16px); }
 
-    /* テーブル・スクロールエリア */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -226,7 +223,6 @@
     .text-left { text-align: left; }
     .text-right { text-align: right; }
 
-    /* 結果エリア */
     .summary-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -259,7 +255,6 @@
       border-radius: 50%; margin-right: 5px;
     }
 
-    /* 積み上げ面グラフ */
     .chart-container {
       width: 100%;
       height: 180px;
@@ -279,25 +274,21 @@
   <!-- ヘッダー -->
   <div class="header-bar">
     <div>
-      <div class="main-title">交通需要予測シミュレーター ver2.0</div>
+      <div class="main-title">交通需要予測シミュレーター ver3.0</div>
       <div class="sub-title">全線シミュレーション (Logsum統合・マルチモード)</div>
     </div>
   </div>
-  <!-- データ入出力 -->
-  <div style="display: flex; gap: 6px;">
+  
+  <!-- データ入出力＆シミュレーション名入力 -->
+  <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 200px;">
+      <span class="input-label" style="margin: 0; white-space: nowrap;">シミュレーション名:</span>
+      <input type="text" id="simNameInput" value="東海道・山陽新幹線" style="text-align: left; padding: 5px 8px;" onchange="currentSimName = this.value;">
+    </div>
+    <div style="display: flex; gap: 6px;">
       <button class="btn-config-action" onclick="exportConfig()">📥 保存</button>
       <button class="btn-config-action" onclick="document.getElementById('configFileInput').click()">📤 読み込み</button>
       <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importConfig(event)">
-      <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ</button>
-  </div>
-  <!-- デバッグ設定 -->
-  <div id="debugPanel" class="card hidden" style="border-color: #2563eb;">
-    <div class="card-header" style="color: #60a5fa;">モデル定数の調整</div>
-    <div class="grid-4">
-      <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040"></div>
-      <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90"></div>
-      <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90"></div>
-      <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.03"></div>
     </div>
   </div>
 
@@ -317,18 +308,19 @@
         <tbody id="cityTableBody"></tbody>
       </table>
     </div>
-    <button class="btn-add" onclick="addCity()">＋ 都市を追加</button>
+    <div style="display: flex; gap: 6px; margin-top: 6px;">
+     <button class="btn-add" style="margin-top:0;" onclick="addCity()">＋ 都市を追加</button>
+     <button class="btn-add" style="margin-top:0; background: #065f46; border-color: #047857; color: #a7f3d0;" onclick="confirmCityOrder()">✓ 並び順を確定</button>
+    </div>
   </div>
 
   <!-- ② 交通モード設定 -->
   <div class="card">
     <div class="card-header">② 交通モード設定</div>
     
-    <!-- モードA (路線型: 最大5種類) -->
     <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px;">【モードA】 路線型（新幹線・リニア・在来線等：最大5種）</div>
     <div id="modeAContainer"></div>
 
-    <!-- モードB (航空機専用モード) -->
     <div style="font-size: 11px; font-weight: bold; color: #f59e0b; margin-top: 14px; margin-bottom: 6px;">【モードB】 航空機モード（点対点）</div>
     <div class="table-container">
       <table>
@@ -399,8 +391,6 @@
         <tbody id="pairTableBody"></tbody>
       </table>
     </div>
-    <!-- 途中計算ログ表示枠（デバッグ用） -->
-    <div id="pairDebugInfo" style="margin-top: 8px; padding: 8px; background: #181818; border: 1px solid #333; border-radius: 6px; font-size: 10px; color: #aaa; font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
 
     <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
 
@@ -427,10 +417,35 @@
       <canvas id="crossSectionCanvas"></canvas>
     </div>
     <div id="chartLegend" style="display: flex; justify-content: center; gap: 12px; margin-top: 8px; font-size: 10px;"></div>
+
+    <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0;">
+
+    <!-- 4. ページ最下部：デバッグパネル開閉トグルボタン -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+      <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
+    </div>
+
+    <!-- 5. ページ最下部：デバッグ設定 ＆ 内部計算ログ -->
+    <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818;">
+      <div class="card-header" style="color: #60a5fa; margin-bottom: 6px;">モデル定数のリアルタイム調整</div>
+      <div class="grid-4" style="margin-bottom: 8px;">
+        <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040" onchange="calculate()"></div>
+        <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="calculate()"></div>
+        <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="calculate()"></div>
+        <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="calculate()"></div>
+      </div>
+      <div class="grid-3">
+        <div class="input-group"><span class="input-label">飽和時間 T_min (分)</span><input type="number" id="paramTmin" step="1" value="0.1" onchange="calculate()"></div>
+        <div class="input-group"><span class="input-label">短距離閾値 (分)</span><input type="number" id="paramShortThreshold" step="1" value="45" onchange="calculate()"></div>
+        <div class="input-group"><span class="input-label">短距離係数</span><input type="number" id="paramShortCoeff" step="0.005" value="0.200" onchange="calculate()"></div>
+      </div>
+
+      <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px;">ピンポイント区間の内部計算ログ</div>
+      <div id="pairDebugInfo" style="padding: 8px; background: #111; border: 1px solid #333; border-radius: 6px; font-size: 10px; color: #aaa; font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
+    </div>
   </div>
 
   <script>
-    // --- 初期データ構造 ---
     const defaultCities = [
       { name: "東京", p: 100, accessAir: 60 },
       { name: "新横浜", p: 60, accessAir: 60 },
@@ -439,301 +454,115 @@
       { name: "博多", p: 70, accessAir: 50 }
     ];
 
-    // モードA（路線型：最大5種類）
     const defaultModeA = [
       {
         "name": "のぞみ/みずほ",
         "enabled": true,
+        "accessTime": 10,
+        "useShortPenalty": true,
         "color": "#3b82f6",
         "stations": [
-          {
-            "cityName": "東京",
-            "travel": 0
-          },
-          {
-            "cityName": "新横浜",
-            "travel": 18
-          },
-          {
-            "cityName": "名古屋",
-            "travel": 99
-          },
-          {
-            "cityName": "新大阪",
-            "travel": 150
-          },
-          {
-            "cityName": "博多",
-            "travel": 297
-          }
+          { "cityName": "東京", "travel": 0 },
+          { "cityName": "新横浜", "travel": 18 },
+          { "cityName": "名古屋", "travel": 99 },
+          { "cityName": "新大阪", "travel": 150 },
+          { "cityName": "博多", "travel": 297 }
         ],
         "segmentFreqs": [
-          {
-            "from": "東京",
-            "to": "新横浜",
-            "freq": 6.5
-          },
-          {
-            "from": "新横浜",
-            "to": "名古屋",
-            "freq": 6.5
-          },
-          {
-            "from": "名古屋",
-            "to": "新大阪",
-            "freq": 6.5
-          },
-          {
-            "from": "新大阪",
-            "to": "博多",
-            "freq": 3
-          }
+          { "from": "東京", "to": "新横浜", "freq": 6.5 },
+          { "from": "新横浜", "to": "名古屋", "freq": 6.5 },
+          { "from": "名古屋", "to": "新大阪", "freq": 6.5 },
+          { "from": "新大阪", "to": "博多", "freq": 3 }
         ]
       },
       {
         "name": "ひかり/さくら",
         "enabled": true,
+        "accessTime": 10,
+        "useShortPenalty": true,
         "color": "#06b6d4",
         "stations": [
-          {
-            "cityName": "東京",
-            "travel": 0
-          },
-          {
-            "cityName": "新横浜",
-            "travel": 18
-          },
-          {
-            "cityName": "名古屋",
-            "travel": 118
-          },
-          {
-            "cityName": "新大阪",
-            "travel": 174
-          },
-          {
-            "cityName": "博多",
-            "travel": 337
-          }
+          { "cityName": "東京", "travel": 0 },
+          { "cityName": "新横浜", "travel": 18 },
+          { "cityName": "名古屋", "travel": 118 },
+          { "cityName": "新大阪", "travel": 174 },
+          { "cityName": "博多", "travel": 337 }
         ],
         "segmentFreqs": [
-          {
-            "from": "東京",
-            "to": "新横浜",
-            "freq": 2
-          },
-          {
-            "from": "新横浜",
-            "to": "名古屋",
-            "freq": 2
-          },
-          {
-            "from": "名古屋",
-            "to": "新大阪",
-            "freq": 1
-          },
-          {
-            "from": "新大阪",
-            "to": "博多",
-            "freq": 1
-          }
+          { "from": "東京", "to": "新横浜", "freq": 2 },
+          { "from": "新横浜", "to": "名古屋", "freq": 2 },
+          { "from": "名古屋", "to": "新大阪", "freq": 1 },
+          { "from": "新大阪", "to": "博多", "freq": 1 }
         ]
       },
       {
         "name": "こだま",
         "enabled": true,
+        "accessTime": 10,
+        "useShortPenalty": true,
         "color": "#10b981",
         "stations": [
-          {
-            "cityName": "東京",
-            "travel": 0
-          },
-          {
-            "cityName": "新横浜",
-            "travel": 18
-          },
-          {
-            "cityName": "名古屋",
-            "travel": 160
-          },
-          {
-            "cityName": "新大阪",
-            "travel": 234
-          },
-          {
-            "cityName": "博多",
-            "travel": 490
-          }
+          { "cityName": "東京", "travel": 0 },
+          { "cityName": "新横浜", "travel": 18 },
+          { "cityName": "名古屋", "travel": 160 },
+          { "cityName": "新大阪", "travel": 234 },
+          { "cityName": "博多", "travel": 490 }
         ],
         "segmentFreqs": [
-          {
-            "from": "東京",
-            "to": "新横浜",
-            "freq": 2
-          },
-          {
-            "from": "新横浜",
-            "to": "名古屋",
-            "freq": 2
-          },
-          {
-            "from": "名古屋",
-            "to": "新大阪",
-            "freq": 2
-          },
-          {
-            "from": "新大阪",
-            "to": "博多",
-            "freq": 1
-          }
+          { "from": "東京", "to": "新横浜", "freq": 2 },
+          { "from": "新横浜", "to": "名古屋", "freq": 2 },
+          { "from": "名古屋", "to": "新大阪", "freq": 2 },
+          { "from": "新大阪", "to": "博多", "freq": 1 }
         ]
       },
       {
         "name": "リニア",
         "enabled": false,
+        "accessTime": 20,
+        "useShortPenalty": true,
         "color": "#ec4899",
         "stations": [
-          {
-            "cityName": "東京",
-            "travel": 0
-          },
-          {
-            "cityName": "名古屋",
-            "travel": 40
-          },
-          {
-            "cityName": "新大阪",
-            "travel": 67
-          },
-          {
-            "cityName": "博多",
-            "travel": 230
-          }
+          { "cityName": "東京", "travel": 0 },
+          { "cityName": "名古屋", "travel": 40 },
+          { "cityName": "新大阪", "travel": 67 },
+          { "cityName": "博多", "travel": 230 }
         ],
         "segmentFreqs": [
-          {
-            "from": "東京",
-            "to": "新横浜",
-            "freq": 5
-          },
-          {
-            "from": "新横浜",
-            "to": "名古屋",
-            "freq": 5
-          },
-          {
-            "from": "名古屋",
-            "to": "新大阪",
-            "freq": 5
-          },
-          {
-            "from": "新大阪",
-            "to": "博多",
-            "freq": 3
-          }
+          { "from": "東京", "to": "新横浜", "freq": 5 },
+          { "from": "新横浜", "to": "名古屋", "freq": 5 },
+          { "from": "名古屋", "to": "新大阪", "freq": 5 },
+          { "from": "新大阪", "to": "博多", "freq": 3 }
         ]
       },
       {
         "name": "在来線",
         "enabled": true,
+        "accessTime": 0,
+        "useShortPenalty": false,
         "color": "#8b5cf6",
         "stations": [
-          {
-            "cityName": "東京",
-            "travel": 0
-          },
-          {
-            "cityName": "新横浜",
-            "travel": 26
-          },
-          {
-            "cityName": "名古屋",
-            "travel": 370
-          },
-          {
-            "cityName": "新大阪",
-            "travel": 475
-          },
-          {
-            "cityName": "博多",
-            "travel": null
-          }
+          { "cityName": "東京", "travel": 0 },
+          { "cityName": "新横浜", "travel": 26 },
+          { "cityName": "名古屋", "travel": 370 },
+          { "cityName": "新大阪", "travel": 475 },
+          { "cityName": "博多", "travel": null }
         ],
         "segmentFreqs": [
-          {
-            "from": "東京",
-            "to": "新横浜",
-            "freq": 6
-          },
-          {
-            "from": "新横浜",
-            "to": "名古屋",
-            "freq": 2
-          },
-          {
-            "from": "名古屋",
-            "to": "新大阪",
-            "freq": 2
-          },
-          {
-            "from": "新大阪",
-            "to": "博多",
-            "freq": 0
-          }
+          { "from": "東京", "to": "新横浜", "freq": 6 },
+          { "from": "新横浜", "to": "名古屋", "freq": 2 },
+          { "from": "名古屋", "to": "新大阪", "freq": 2 },
+          { "from": "新大阪", "to": "博多", "freq": 0 }
         ]
       }
-    ] ;
+    ];
 
-    // モードB（航空機専用）
     const defaultModeB = [
-      {
-        "orig": "東京",
-        "dest": "新大阪",
-        "travel": 70,
-        "freq": 2,
-        "color": "#f59e0b",
-        "enabled": true
-      },
-      {
-        "orig": "東京",
-        "dest": "博多",
-        "travel": 110,
-        "freq": 3.5,
-        "color": "#f59e0b",
-        "enabled": true
-      },
-      {
-        "orig": "名古屋",
-        "dest": "博多",
-        "travel": 90,
-        "freq": 1,
-        "color": "#f59e0b",
-        "enabled": true
-      },
-      {
-        "orig": "新大阪",
-        "dest": "博多",
-        "travel": 75,
-        "freq": 1,
-        "color": "#f59e0b",
-        "enabled": true
-      },
-      {
-        "orig": "新横浜",
-        "dest": "新大阪",
-        "travel": 70,
-        "freq": 2,
-        "color": "#f59e0b",
-        "enabled": true
-      },
-      {
-        "orig": "新横浜",
-        "dest": "博多",
-        "travel": 110,
-        "freq": 3.5,
-        "color": "#f59e0b",
-        "enabled": true
-      }
+      { "orig": "東京", "dest": "新大阪", "travel": 70, "freq": 2, "color": "#f59e0b", "enabled": true },
+      { "orig": "東京", "dest": "博多", "travel": 110, "freq": 3.5, "color": "#f59e0b", "enabled": true },
+      { "orig": "名古屋", "dest": "博多", "travel": 90, "freq": 1, "color": "#f59e0b", "enabled": true },
+      { "orig": "新大阪", "dest": "博多", "travel": 75, "freq": 1, "color": "#f59e0b", "enabled": true },
+      { "orig": "新横浜", "dest": "新大阪", "travel": 70, "freq": 2, "color": "#f59e0b", "enabled": true },
+      { "orig": "新横浜", "dest": "博多", "travel": 110, "freq": 3.5, "color": "#f59e0b", "enabled": true }
     ];
 
     let cities = JSON.parse(JSON.stringify(defaultCities));
@@ -743,21 +572,18 @@
     let odResultsMatrix = {};
     let allModeNames = [];
 
-    // --- 1. UI レンダリング ---
     function renderCitiesTable() {
       const tbody = document.getElementById("cityTableBody");
       tbody.innerHTML = "";
       cities.forEach((c, idx) => {
         const tr = document.createElement("tr");
-        
-        // 最初の都市は「上へ」を無効化、最後の都市は「下へ」を無効化
         const upDisabled = (idx === 0) ? "disabled style='opacity:0.3; cursor:default;'" : "";
         const downDisabled = (idx === cities.length - 1) ? "disabled style='opacity:0.3; cursor:default;'" : "";
 
         tr.innerHTML = `
           <td><input type="text" class="text-left" value="${c.name}" onchange="cities[${idx}].name=this.value; syncCityNames();"></td>
-          <td><input type="number" value="${c.p}" onchange="cities[${idx}].p=Number(this.value)"></td>
-          <td><input type="number" value="${c.accessAir}" onchange="cities[${idx}].accessAir=Number(this.value)"></td>
+          <td><input type="number" value="${c.p}" onchange="cities[${idx}].p=Number(this.value); calculate();"></td>
+          <td><input type="number" value="${c.accessAir}" onchange="cities[${idx}].accessAir=Number(this.value); calculate();"></td>
           <td style="white-space: nowrap;">
             <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:2px;" onclick="moveCity(${idx}, -1)" ${upDisabled}>▲</button>
             <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:4px;" onclick="moveCity(${idx}, 1)" ${downDisabled}>▼</button>
@@ -769,18 +595,18 @@
       syncCitySelects();
     }
 
-    // --- 都市の並び替え処理 ---
     function moveCity(idx, direction) {
       const targetIdx = idx + direction;
       if (targetIdx < 0 || targetIdx >= cities.length) return;
 
-      // 配列の要素を入れ替え
       const temp = cities[idx];
       cities[idx] = cities[targetIdx];
       cities[targetIdx] = temp;
 
-      // 画面と関連テーブルの再描画、および再計算
       renderCitiesTable();
+    }
+
+    function confirmCityOrder() {
       renderModeA();
       calculate();
     }
@@ -789,7 +615,6 @@
       const container = document.getElementById("modeAContainer");
       container.innerHTML = "";
       
-      // 現在の都市リストの順序に基づき、正しい隣接区間リストを生成 (例: 東京-品川, 品川-新横浜...)
       const currentSegments = [];
       for (let i = 0; i < cities.length - 1; i++) {
         currentSegments.push({ from: cities[i].name, to: cities[i+1].name });
@@ -799,7 +624,6 @@
         const div = document.createElement("div");
         div.className = "mode-item";
         
-        // --- 1. 各都市の始発所要時間テーブル ---
         let stationRowsHtml = "";
         cities.forEach((c) => {
           const st = mA.stations.find(s => s.cityName === c.name) || { travel: null };
@@ -813,21 +637,17 @@
           `;
         });
 
-        // --- 2. 各区間の運行頻度テーブル (ゴミデータを自動掃除し、現在の隣接区間のみにクレンジング) ---
         const newSegmentFreqs = [];
         let segmentRowsHtml = "";
 
         currentSegments.forEach((seg) => {
-          // 既存データから「同区間（順不同）」のデータを探す
           let sf = (mA.segmentFreqs || []).find(s => 
             (s.from === seg.from && s.to === seg.to) || (s.from === seg.to && s.to === seg.from)
           );
           
-          // 存在しない場合は初期値 0 で作成
           if (!sf) {
             sf = { from: seg.from, to: seg.to, freq: 0 };
           } else {
-            // 区間名を最新の都市名順に更新
             sf.from = seg.from;
             sf.to = seg.to;
           }
@@ -842,7 +662,6 @@
           `;
         });
 
-        // ゴミデータ（無効になった過去の区間）を排出し、最新の区間構造へ更新
         mA.segmentFreqs = newSegmentFreqs;
 
         div.innerHTML = `
@@ -851,10 +670,21 @@
               <span class="color-dot" style="background:${mA.color}"></span>
               <input type="text" value="${mA.name}" style="background:transparent; border:none; border-bottom:1px dashed #666; color:#fff; font-weight:bold; width:80px;" onchange="modeA[${idx}].name=this.value">
             </div>
-            <label class="switch-wrap">
-              <input type="checkbox" ${mA.enabled ? 'checked' : ''} onchange="modeA[${idx}].enabled=this.checked; calculate();">
-              <span class="switch-slider"></span>
-            </label>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; gap:3px;">
+                <span style="font-size:10px; color:#aaa;">アクセス定数:</span>
+                <input type="number" value="${mA.accessTime || 0}" style="width:42px; padding:2px 4px;" onchange="modeA[${idx}].accessTime=Number(this.value); calculate();">
+                <span style="font-size:10px; color:#aaa;">分</span>
+              </div>
+              <label style="font-size:10px; color:#aaa; display:flex; align-items:center; gap:2px; cursor:pointer;">
+                <input type="checkbox" ${mA.useShortPenalty !== false ? 'checked' : ''} onchange="modeA[${idx}].useShortPenalty=this.checked; calculate();">
+                短距離補正
+              </label>
+              <label class="switch-wrap">
+                <input type="checkbox" ${mA.enabled ? 'checked' : ''} onchange="modeA[${idx}].enabled=this.checked; calculate();">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
           </div>
 
           <div class="grid-2">
@@ -890,15 +720,14 @@
         tr.innerHTML = `
           <td><input type="text" class="text-left" value="${mB.orig}" onchange="modeB[${idx}].orig=this.value"></td>
           <td><input type="text" class="text-left" value="${mB.dest}" onchange="modeB[${idx}].dest=this.value"></td>
-          <td><input type="number" value="${mB.travel}" onchange="modeB[${idx}].travel=Number(this.value)"></td>
-          <td><input type="number" step="0.5" value="${mB.freq}" onchange="modeB[${idx}].freq=Number(this.value)"></td>
+          <td><input type="number" value="${mB.travel}" onchange="modeB[${idx}].travel=Number(this.value); calculate();"></td>
+          <td><input type="number" step="0.5" value="${mB.freq}" onchange="modeB[${idx}].freq=Number(this.value); calculate();"></td>
           <td><button class="btn-del" onclick="deleteModeB(${idx})">削除</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- データ更新ヘルパー ---
     function updateModeAStation(mAIdx, cityName, val) {
       let st = modeA[mAIdx].stations.find(s => s.cityName === cityName);
       if (!st) {
@@ -906,6 +735,7 @@
         modeA[mAIdx].stations.push(st);
       }
       st.travel = (val === "-" || val.trim() === "") ? null : Number(val);
+      calculate();
     }
 
     function updateModeASegmentFreq(mAIdx, fromCity, toCity, val) {
@@ -916,9 +746,9 @@
         modeA[mAIdx].segmentFreqs.push(sf);
       }
       sf.freq = Number(val);
+      calculate();
     }
 
-    // --- 修正版: 経路上の区間最小頻度取得ロジック ---
     function getPathMinFreq(mA, origIdx, destIdx) {
       if (!mA.segmentFreqs || mA.segmentFreqs.length === 0) return 0;
       
@@ -929,12 +759,10 @@
 
       let minFreq = Infinity;
       
-      // minIdx から maxIdx までの隣接区間をすべて走査
       for (let k = minIdx; k < maxIdx; k++) {
         const c1 = cities[k].name;
         const c2 = cities[k+1].name;
         
-        // 双方向で一致する区間データを検索
         const sf = mA.segmentFreqs.find(s => 
           (s.from === c1 && s.to === c2) || (s.from === c2 && s.to === c1)
         );
@@ -963,9 +791,21 @@
     }
 
     function addModeBRow() {
-      const c1 = cities[0] ? cities[0].name : "東京";
-      const c2 = cities[cities.length - 1] ? cities[cities.length - 1].name : "新大阪";
-      modeB.push({ orig: c1, dest: c2, travel: 70, freq: 2.0, color: "#f59e0b", enabled: true });
+      if (modeB.length > 0) {
+        const lastRow = modeB[modeB.length - 1];
+        modeB.push({
+          orig: lastRow.orig,
+          dest: lastRow.dest,
+          travel: lastRow.travel,
+          freq: lastRow.freq,
+          color: lastRow.color || "#f59e0b",
+          enabled: true
+        });
+      } else {
+        const c1 = cities[0] ? cities[0].name : "東京";
+        const c2 = cities[cities.length - 1] ? cities[cities.length - 1].name : "新大阪";
+        modeB.push({ orig: c1, dest: c2, travel: 70, freq: 2.0, color: "#f59e0b", enabled: true });
+      }
       renderModeBTable();
     }
 
@@ -997,55 +837,57 @@
     }
 
     function toggleDebug() {
-      document.getElementById("debugPanel").classList.toggle("hidden");
+      const isHidden = document.getElementById("debugPanel").classList.toggle("hidden");
+      if (!isHidden) {
+        document.getElementById("debugPanel").scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
-    function resetDefaults() {
-      document.getElementById("paramK").value = 0.040;
-      document.getElementById("paramAlpha").value = 0.90;
-      document.getElementById("paramGamma").value = 0.90;
-      document.getElementById("paramLambda").value = 0.03;
-      
-      cities = JSON.parse(JSON.stringify(defaultCities));
-      modeA = JSON.parse(JSON.stringify(defaultModeA));
-      modeB = JSON.parse(JSON.stringify(defaultModeB));
-
-      renderCitiesTable();
-      renderModeA();
-      renderModeBTable();
-      calculate();
-    }
-
-    // --- 設定データの書き出し（JSONエクスポート） ---
     function exportConfig() {
+      const simName = document.getElementById("simNameInput").value.trim() || "無題シミュレーション";
+      
       const configData = {
         version: "2.2",
+        simName: simName,
         timestamp: new Date().toISOString(),
         params: {
           K: Number(document.getElementById("paramK").value),
           alpha: Number(document.getElementById("paramAlpha").value),
           gamma: Number(document.getElementById("paramGamma").value),
-          lambda: Number(document.getElementById("paramLambda").value)
+          lambda: Number(document.getElementById("paramLambda").value),
+          Tmin: Number(document.getElementById("paramTmin").value),
+          shortThreshold: Number(document.getElementById("paramShortThreshold").value),
+          shortCoeff: Number(document.getElementById("paramShortCoeff").value)
         },
         cities: cities,
         modeA: modeA,
         modeB: modeB
       };
 
-      const jsonStr = JSON.stringify(configData, null, 2);
+      let jsonStr = JSON.stringify(configData, null, 2);
+      jsonStr = jsonStr.replace(/\{\n\s+("name"|"orig"|"from"|"cityName")[\s\S]*?\n\s+\}/g, (match) => {
+        return match.replace(/\n\s*/g, ' ');
+      });
+
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      
+      const safeSimName = simName.replace(/[\\/:*?"<>|]/g, '_');
+      const fileName = `traffic_config_${safeSimName}_${dateStr}.json`;
+
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       
       const a = document.createElement("a");
       a.href = url;
-      a.download = `traffic_simulator_config_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
-    // --- 設定データの読み込み（JSONインポート） ---
     function importConfig(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1055,11 +897,18 @@
         try {
           const config = JSON.parse(e.target.result);
 
+          if (config.simName) {
+            document.getElementById("simNameInput").value = config.simName;
+          }
+
           if (config.params) {
             if (config.params.K !== undefined) document.getElementById("paramK").value = config.params.K;
             if (config.params.alpha !== undefined) document.getElementById("paramAlpha").value = config.params.alpha;
             if (config.params.gamma !== undefined) document.getElementById("paramGamma").value = config.params.gamma;
             if (config.params.lambda !== undefined) document.getElementById("paramLambda").value = config.params.lambda;
+            if (config.params.Tmin !== undefined) document.getElementById("paramTmin").value = config.params.Tmin;
+            if (config.params.shortThreshold !== undefined) document.getElementById("paramShortThreshold").value = config.params.shortThreshold;
+            if (config.params.shortCoeff !== undefined) document.getElementById("paramShortCoeff").value = config.params.shortCoeff;
           }
 
           if (config.cities && Array.isArray(config.cities)) {
@@ -1072,29 +921,57 @@
             modeB = config.modeB;
           }
 
-          // UIの更新と再計算
           renderCitiesTable();
           renderModeA();
           renderModeBTable();
           calculate();
 
-          alert("設定ファイルを正常に読み込みました。");
+          alert(`設定「${config.simName || file.name}」を正常に読み込みました。`);
         } catch (err) {
           alert("設定ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
           console.error(err);
         }
-        // ファイル選択のクリア
         event.target.value = "";
       };
       reader.readAsText(file);
     }
+
+    function resetDefaults() {
+      document.getElementById("paramK").value = 0.040;
+      document.getElementById("paramAlpha").value = 0.90;
+      document.getElementById("paramGamma").value = 0.90;
+      document.getElementById("paramLambda").value = 0.03;
+      document.getElementById("paramTmin").value = 20;
+      document.getElementById("paramShortThreshold").value = 25;
+      document.getElementById("paramShortCoeff").value = 0.030;
+      
+      document.getElementById("simNameInput").value = "東海道・山陽新幹線";
+
+      cities = JSON.parse(JSON.stringify(defaultCities));
+      modeA = JSON.parse(JSON.stringify(defaultModeA));
+      modeB = JSON.parse(JSON.stringify(defaultModeB));
+
+      const debugPanel = document.getElementById("debugPanel");
+      if (debugPanel && !debugPanel.classList.contains("hidden")) {
+        debugPanel.classList.add("hidden");
+      }
+
+      renderCitiesTable();
+      renderModeA();
+      renderModeBTable();
+      calculate();
+    }
     
-    // --- 2. 需要計算コアロジック ---
+    // --- 需要計算コアロジック (飽和型重力モデル ＋ 短距離抵抗) ---
     function calculate() {
       const K = Number(document.getElementById("paramK").value) || 0.040;
       const alpha = Number(document.getElementById("paramAlpha").value) || 0.90;
       const gamma = Number(document.getElementById("paramGamma").value) || 0.90;
       const lambda = Number(document.getElementById("paramLambda").value) || 0.03;
+
+      const Tmin = Number(document.getElementById("paramTmin").value) || 20;
+      const shortThreshold = Number(document.getElementById("paramShortThreshold").value) || 25;
+      const shortCoeff = Number(document.getElementById("paramShortCoeff").value) || 0.03;
 
       odResultsMatrix = {};
 
@@ -1112,7 +989,6 @@
 
           let availableModes = [];
 
-          // モードA（路線型）の判定
           modeA.forEach(mA => {
             if (!mA.enabled) return;
             const stOrig = mA.stations.find(s => s.cityName === cOrig.name);
@@ -1123,7 +999,14 @@
               if (minFreq > 0) {
                 const inVehicleTime = Math.abs(stDest.travel - stOrig.travel);
                 const waitTime = 60 / (2 * minFreq);
-                const Tk = inVehicleTime + waitTime;
+                const accessTime = mA.accessTime || 0;
+
+                let shortPenalty = 0;
+                if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
+                  shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
+                }
+
+                const Tk = inVehicleTime + waitTime + accessTime + shortPenalty;
 
                 availableModes.push({
                   name: mA.name,
@@ -1135,7 +1018,6 @@
             }
           });
 
-          // モードB（航空機専用）の判定
           modeB.forEach(mB => {
             if (!mB.enabled || mB.freq <= 0) return;
             if ((mB.orig === cOrig.name && mB.dest === cDest.name) || (mB.orig === cDest.name && mB.dest === cOrig.name)) {
@@ -1152,7 +1034,6 @@
             }
           });
 
-          // Logsum 計算
           if (availableModes.length === 0) {
             odResultsMatrix[cOrig.name][cDest.name] = { Teff: 999, Mtotal: 0, modes: [] };
           } else {
@@ -1163,7 +1044,7 @@
             });
 
             const Teff = -Math.log(sumExp) / lambda;
-            const Mtotal = K * Math.pow(cOrig.p * cDest.p, alpha) / Math.pow(Teff, gamma);
+            const Mtotal = K * Math.pow(cOrig.p * cDest.p, alpha) / Math.pow(Teff + Tmin, gamma);
 
             availableModes.forEach(m => {
               m.share = (m.expV / sumExp) * 100;
@@ -1185,7 +1066,6 @@
       renderCrossSectionChart();
     }
 
-    // --- 3. 出力描画 ---
     function updatePairAnalysis() {
       const orig = document.getElementById("selectOrig").value;
       const dest = document.getElementById("selectDest").value;
@@ -1255,7 +1135,6 @@
       names.add("航空機");
       allModeNames = Array.from(names);
 
-      // 「総需要」のみ checked、各モードはチェックなし
       let html = `<label style="font-size:11px; font-weight:bold; color:#60a5fa;"><input type="checkbox" id="filterTotal" checked onchange="toggleOdFilter('total')"> 総需要</label>`;
       allModeNames.forEach(name => {
         html += `<label style="font-size:11px; color:#ccc;"><input type="checkbox" class="od-mode-filter" value="${name}" onchange="toggleOdFilter('mode')" style="margin-left:8px;"> ${name}</label>`;
@@ -1263,21 +1142,17 @@
       container.innerHTML = html;
     }
 
-    // 2. チェックボックス相互制御用イベントハンドラ（新規追加）
     function toggleOdFilter(type) {
       const filterTotal = document.getElementById("filterTotal");
       const modeChecks = document.querySelectorAll(".od-mode-filter");
 
       if (type === 'total' && filterTotal.checked) {
-        // 「総需要」がチェックされたら各モードのチェックを全解除
         modeChecks.forEach(ck => ck.checked = false);
       } else if (type === 'mode') {
-        // 各モードのいずれかにチェックが入ったら「総需要」のチェックを解除
         const anyModeChecked = Array.from(modeChecks).some(ck => ck.checked);
         if (anyModeChecked) {
           filterTotal.checked = false;
         } else {
-          // すべて外れた場合は「総需要」をONに戻す
           filterTotal.checked = true;
         }
       }
@@ -1325,7 +1200,6 @@
       table.innerHTML = headHtml + bodyHtml;
     }
 
-    // --- 修正版: 断面交通量グラフ描画処理 ---
     function renderCrossSectionChart() {
       const canvas = document.getElementById("crossSectionCanvas");
       const ctx = canvas.getContext("2d");
@@ -1369,7 +1243,6 @@
                 const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
                 if (res && res.modes && res.modes.length > 0) {
                   const mMatch = res.modes.find(m => m.name === mA.name);
-                  // ★ undefined や NaN の加算を防止ガード
                   if (mMatch && typeof mMatch.demand === 'number' && !isNaN(mMatch.demand)) {
                     sectionDemand += mMatch.demand;
                   }
@@ -1420,14 +1293,12 @@
 
       const stepX = chartW / numSections;
 
-      // X軸ラベル (出発駅名のみ、各区間の中央に配置)
       ctx.textAlign = "center";
       sections.forEach((sec, idx) => {
         const x = paddingLeft + (idx + 0.5) * stepX;
         ctx.fillText(sec.label, x, height - paddingBottom + 14);
       });
 
-      // 積み上げ面グラフ描画
       activeModeA.forEach(mA => {
         ctx.fillStyle = mA.color + "bb";
         ctx.strokeStyle = mA.color;
@@ -1460,18 +1331,12 @@
       });
     }
 
-    // 初回実行
     document.addEventListener("DOMContentLoaded", function() {
       renderCitiesTable();
       renderModeA();
       renderModeBTable();
       calculate();
     });
-
-    renderCitiesTable();
-    renderModeA();
-    renderModeBTable();
-    calculate();
   </script>
 </body>
 </html>
