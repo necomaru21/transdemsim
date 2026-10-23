@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>交通需要予測シミュレーター ver3.0</title>
+  <title>交通需要予測シミュレーター ver4.0</title>
   <style>
     * {
       box-sizing: border-box;
@@ -15,7 +15,7 @@
       background-color: #121212;
       color: #e0e0e0;
       padding: 12px;
-      max-width: 1920px;
+      max-width: none;
       margin: 0 auto;
       line-height: 1.4;
       -webkit-tap-highlight-color: transparent;
@@ -82,6 +82,7 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+    .grid-5 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 6px; }
 
     .input-group {
       display: flex;
@@ -267,185 +268,373 @@
     }
 
     .hidden { display: none !important; }
+    
+    /* 追従操作バー (スマホ標準) */
+    .sticky-action-bar {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(18, 18, 18, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 8px 0;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-calc-sticky {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      white-space: nowrap;
+    }
+    .btn-calc-sticky:active { background: #1d4ed8; }
+
+    .btn-undo-redo {
+      background: #252525;
+      color: #888888;
+      border: 1px solid #3a3a3a;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    
+    /* 動的モードジャンプボタン */
+    .nav-tabs-sticky {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+      width: 100%;
+    }
+    .btn-nav-jump {
+      background: #1e1e1e;
+      color: #dddddd;
+      border: 1px solid #444444;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .btn-nav-jump:hover {
+      background: #2a2a2a;
+      filter: brightness(1.2);
+    }
+    .btn-nav-jump:active {
+      transform: translateY(1px);
+    }
+
+    /* スマホ・標準画面用スタイル */
+    .top-title-area {
+      margin-bottom: 8px;
+    }
+    .sim-name-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    
+    /* ================================================== */
+    /* PC・大画面向けレスポンシブ対応 (1920px以上)        */
+    /* ================================================== */
+    @media (min-width: 1920px) {
+      html, body {
+        height: 100vh;
+        overflow: hidden;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        padding: 10px 16px;
+      }
+
+      .top-controls-pc {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 10px;
+        background: #181818;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid #2a2a2a;
+      }
+
+      .top-title-area {
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sim-name-box {
+        margin-bottom: 0;
+      }
+
+      .sticky-action-bar {
+        position: static;
+        background: transparent;
+        border-bottom: none;
+        padding: 0;
+        margin-bottom: 0;
+        backdrop-filter: none;
+      }
+
+      #dynamicNavTabs {
+        display: none !important;
+      }
+
+      .main-grid-pc {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1fr 1.3fr;
+        gap: 10px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .main-grid-pc > .card {
+        height: 100%;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .card-scroll-body {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 4px;
+      }
+      
+      .card-scroll-body::-webkit-scrollbar { width: 5px; }
+      .card-scroll-body::-webkit-scrollbar-track { background: #1a1a1a; }
+      .card-scroll-body::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    }
   </style>
 </head>
-<body>
 
-  <!-- ヘッダー -->
-  <div class="header-bar">
-    <div>
-      <div class="main-title">交通需要予測シミュレーター ver3.0</div>
-      <div class="sub-title">全線シミュレーション (Logsum統合・マルチモード)</div>
+<body>
+  <!-- タイトル & シミュレーション名 -->
+  <div class="top-controls-pc">
+    <div class="top-title-area">
+      <div>
+        <div class="main-title">交通需要予測シミュレーター ver4.0</div>
+        <div class="sub-title">全線シミュレーション (Logsum統合・マルチモード)</div>
+      </div>
+      <div class="sim-name-box">
+        <span class="input-label" style="margin: 0; white-space: nowrap;">名称:</span>
+        <input type="text" id="simNameInput" value="東海道・山陽新幹線" style="text-align: left; padding: 4px 8px; width: 180px;" onchange="currentSimName = this.value;">
+      </div>
     </div>
   </div>
-  
-  <!-- データ入出力＆シミュレーション名入力 -->
-  <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
-    <div style="display: flex; align-items: center; gap: 4px; flex: 1; min-width: 200px;">
-      <span class="input-label" style="margin: 0; white-space: nowrap;">シミュレーション名:</span>
-      <input type="text" id="simNameInput" value="東海道・山陽新幹線" style="text-align: left; padding: 5px 8px;" onchange="currentSimName = this.value;">
-    </div>
-    <div style="display: flex; gap: 6px;">
+
+  <!-- 操作ボタンバー（スマホではトップ階層にあるため画面上部に綺麗に固定追従します） -->
+  <div class="sticky-action-bar">
+    <div style="display: flex; gap: 4px;">
       <button class="btn-config-action" onclick="exportConfig()">📥 保存</button>
       <button class="btn-config-action" onclick="document.getElementById('configFileInput').click()">📤 読み込み</button>
       <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importConfig(event)">
     </div>
-  </div>
 
-  <!-- ① 都市マスター設定 -->
-  <div class="card">
-    <div class="card-header">① 都市マスター設定</div>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th class="text-left">都市名</th>
-            <th>ポテンシャル</th>
-            <th>航空アクセス(分)</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="cityTableBody"></tbody>
-      </table>
+    <div style="display: flex; gap: 6px; align-items: center;">
+      <button class="btn-undo-redo" title="元に戻す (将来実装)" disabled>↶</button>
+      <button class="btn-undo-redo" title="やり直す (将来実装)" disabled>↷</button>
+      <button class="btn-calc-sticky" onclick="calculate()">⚡ 計算する</button>
     </div>
-    <div style="display: flex; gap: 6px; margin-top: 6px;">
-     <button class="btn-add" style="margin-top:0;" onclick="addCity()">＋ 都市を追加</button>
-     <button class="btn-add" style="margin-top:0; background: #065f46; border-color: #047857; color: #a7f3d0;" onclick="confirmCityOrder()">✓ 並び順を確定</button>
-    </div>
-  </div>
-
-  <!-- ② 交通モード設定 -->
-  <div class="card">
-    <div class="card-header">② 交通モード設定</div>
     
-    <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px;">【モードA】 路線型（新幹線・リニア・在来線等：最大5種）</div>
-    <div id="modeAContainer"></div>
-
-    <div style="font-size: 11px; font-weight: bold; color: #f59e0b; margin-top: 14px; margin-bottom: 6px;">【モードB】 航空機モード（点対点）</div>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th class="text-left">出発都市</th>
-            <th class="text-left">到着都市</th>
-            <th>飛行時間(分)</th>
-            <th>便数(本/h)</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="modeBTableBody"></tbody>
-      </table>
-    </div>
-    <button class="btn-add" style="border-color: #d97706; background: #451a03; color: #fde68a;" onclick="addModeBRow()">＋ 航空路線を追加</button>
+    <!-- 動的モードジャンプタブ (スマホ時のみ表示) -->
+    <div class="nav-tabs-sticky" id="dynamicNavTabs"></div>
   </div>
 
-  <!-- 操作ボタン -->
-  <div class="action-row">
-    <button class="btn-reset" onclick="resetDefaults()">↺ デフォルトに戻す</button>
-    <button class="btn-calc" onclick="calculate()">計算する</button>
-  </div>
+  <!-- メインコンテンツ領域（PCで4列グリッド、スマホで縦1列） -->
+  <div class="main-grid-pc">
 
-  <!-- ③ アナリティクス＆結果表示 -->
-  <div class="card">
-    <div class="card-header">③ 計算結果＆分析</div>
-
-    <!-- 1. 任意2都市選択プレビュー -->
-    <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px;">1. 区間ピンポイント分析</div>
-    <div class="grid-2" style="margin-bottom: 10px;">
-      <div class="input-group">
-        <span class="input-label">起点都市</span>
-        <select id="selectOrig" onchange="updatePairAnalysis()"></select>
-      </div>
-      <div class="input-group">
-        <span class="input-label">終点都市</span>
-        <select id="selectDest" onchange="updatePairAnalysis()"></select>
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="summary-title">総需要量 M<sub>total</sub></div>
-        <div class="summary-value val-blue" id="pairMtotal">--</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
-        <div class="summary-value val-purple" id="pairTeff">--</div>
+    <!-- ① 都市マスター設定 -->
+    <div class="card" id="sec-city">
+      <div class="card-header">① 都市マスター設定</div>
+      <div class="card-scroll-body">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="text-left">都市名</th>
+                <th>ポテンシャル</th>
+                <th>航空アクセス(分)</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="cityTableBody"></tbody>
+          </table>
+        </div>
+        <div style="display: flex; gap: 6px; margin-top: 6px;">
+          <button class="btn-add" style="margin-top:0;" onclick="addCity()">＋ 都市を追加</button>
+          <button class="btn-add" style="margin-top:0; background: #065f46; border-color: #047857; color: #a7f3d0;" onclick="confirmCityOrder()">✓ 並び順を確定</button>
+        </div>
       </div>
     </div>
 
-    <div style="margin-bottom: 10px;">
-      <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600;">機関別市場シェア (%)</div>
-      <div class="share-bar-container" id="pairShareBar"></div>
-    </div>
-
-    <div class="table-container" style="margin-bottom: 16px;">
-      <table>
-        <thead>
-          <tr>
-            <th class="text-left">モード</th>
-            <th class="text-right">総合時間 T<sub>k</sub></th>
-            <th class="text-right">需要量 M<sub>k</sub></th>
-            <th class="text-right">シェア</th>
-          </tr>
-        </thead>
-        <tbody id="pairTableBody"></tbody>
-      </table>
-    </div>
-
-    <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
-
-    <!-- 2. 全都市間需要マトリクス -->
-    <div class="card-header" style="margin-bottom: 6px;">
-      <span>2. 都市間需要マトリクス (OD表)</span>
-    </div>
-    <div style="font-size: 10px; color: #999; margin-bottom: 6px;">集計対象モードを選択（チェックを入れたモードの需要を足し合わせます）</div>
-    <div id="odFilterContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;"></div>
-    
-    <div class="table-container" style="margin-bottom: 16px;">
-      <table id="odMatrixTable"></table>
-    </div>
-
-    <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
-
-    <!-- 3. 通過需要（断面交通量）の積み上げ面グラフ -->
-    <div class="card-header" style="margin-bottom: 4px;">
-      <span>3. 区間別通過需要（断面交通量）</span>
-    </div>
-    <div style="font-size: 10px; color: #999; margin-bottom: 6px;">モードA（路線型）の区間ごとの通過需要を積み上げて表示</div>
-    
-    <div class="chart-container">
-      <canvas id="crossSectionCanvas"></canvas>
-    </div>
-    <div id="chartLegend" style="display: flex; justify-content: center; gap: 12px; margin-top: 8px; font-size: 10px;"></div>
-
-    <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0;">
-
-    <!-- 4. ページ最下部：デバッグパネル開閉トグルボタン -->
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-      <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
-    </div>
-
-    <!-- 5. ページ最下部：デバッグ設定 ＆ 内部計算ログ -->
-    <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818;">
-      <div class="card-header" style="color: #60a5fa; margin-bottom: 6px;">モデル定数のリアルタイム調整</div>
-      <div class="grid-4" style="margin-bottom: 8px;">
-        <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040" onchange="calculate()"></div>
-        <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="calculate()"></div>
-        <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="calculate()"></div>
-        <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="calculate()"></div>
+    <!-- ② 交通モード設定 【モードA】 -->
+    <div class="card">
+      <div class="card-header">② 交通モード設定（モードA）</div>
+      <div class="card-scroll-body">
+        <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px;">【モードA】 路線型（新幹線・リニア・在来線等：最大5種）</div>
+        <div id="modeAContainer"></div>
       </div>
-      <div class="grid-3">
-        <div class="input-group"><span class="input-label">飽和時間 T_min (分)</span><input type="number" id="paramTmin" step="1" value="0.1" onchange="calculate()"></div>
-        <div class="input-group"><span class="input-label">短距離閾値 (分)</span><input type="number" id="paramShortThreshold" step="1" value="45" onchange="calculate()"></div>
-        <div class="input-group"><span class="input-label">短距離係数</span><input type="number" id="paramShortCoeff" step="0.005" value="0.200" onchange="calculate()"></div>
-      </div>
-
-      <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px;">ピンポイント区間の内部計算ログ</div>
-      <div id="pairDebugInfo" style="padding: 8px; background: #111; border: 1px solid #333; border-radius: 6px; font-size: 10px; color: #aaa; font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
     </div>
-  </div>
+
+    <!-- ② 交通モード設定 【モードB】 -->
+    <div class="card" id="sec-modeb">
+      <div class="card-header">② 交通モード設定（モードB）</div>
+      <div class="card-scroll-body">
+        <div style="font-size: 11px; font-weight: bold; color: #f59e0b; margin-bottom: 6px;">【モードB】 航空機モード（点対点）</div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="text-left">出発都市</th>
+                <th class="text-left">到着都市</th>
+                <th>飛行時間(分)</th>
+                <th>便数(本/h)</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="modeBTableBody"></tbody>
+          </table>
+        </div>
+        <button class="btn-add" style="border-color: #d97706; background: #451a03; color: #fde68a;" onclick="addModeBRow()">＋ 航空路線を追加</button>
+      </div>
+    </div>
+
+    <!-- ③ アナリティクス＆結果表示 -->
+    <div class="card" id="sec-result">
+      <div class="card-header">③ 計算結果＆分析</div>
+      <div class="card-scroll-body">
+
+        <!-- 1. 任意2都市選択プレビュー -->
+        <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px;">1. 区間ピンポイント分析</div>
+        <div class="grid-2" style="margin-bottom: 10px;">
+          <div class="input-group">
+            <span class="input-label">起点都市</span>
+            <select id="selectOrig" onchange="updatePairAnalysis()"></select>
+          </div>
+          <div class="input-group">
+            <span class="input-label">終点都市</span>
+            <select id="selectDest" onchange="updatePairAnalysis()"></select>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-title">総需要量 M<sub>total</sub></div>
+            <div class="summary-value val-blue" id="pairMtotal">--</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
+            <div class="summary-value val-purple" id="pairTeff">--</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600;">機関別市場シェア (%)</div>
+          <div class="share-bar-container" id="pairShareBar"></div>
+        </div>
+
+        <div class="table-container" style="margin-bottom: 16px;">
+          <table>
+            <thead>
+              <tr>
+                <th class="text-left">モード</th>
+                <th class="text-right">総合時間 T<sub>k</sub></th>
+                <th class="text-right">需要量 M<sub>k</sub></th>
+                <th class="text-right">シェア</th>
+              </tr>
+            </thead>
+            <tbody id="pairTableBody"></tbody>
+          </table>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
+
+        <!-- 2. 全都市間需要マトリクス -->
+        <div class="card-header" style="margin-bottom: 6px;">
+          <span>2. 都市間需要マトリクス (OD表)</span>
+        </div>
+        <div style="font-size: 10px; color: #999; margin-bottom: 6px;">集計対象モードを選択（チェックを入れたモードの需要を足し合わせます）</div>
+        <div id="odFilterContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;"></div>
+        
+        <div class="table-container" style="margin-bottom: 16px;">
+          <table id="odMatrixTable"></table>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
+
+        <!-- 3. 通過需要（断面交通量）の積み上げ面グラフ -->
+        <div class="card-header" style="margin-bottom: 4px;">
+          <span>3. 区間別通過需要（断面交通量）</span>
+        </div>
+        <div style="font-size: 10px; color: #999; margin-bottom: 6px;">モードA（路線型）の区間ごとの通過需要を積み上げて表示</div>
+        
+        <div class="chart-container">
+          <canvas id="crossSectionCanvas"></canvas>
+        </div>
+        <div id="chartLegend" style="display: flex; justify-content: center; gap: 12px; margin-top: 8px; font-size: 10px;"></div>
+
+        <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0;">
+
+        <!-- 4. ページ最下部：デバッグパネル開閉トグル ＆ リセットボタン -->
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px;">
+          <button class="btn-reset" style="padding: 6px 10px; font-size: 11px;" onclick="resetDefaults()">↺ デフォルトにリセット</button>
+          <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
+        </div>
+
+        <!-- 5. ページ最下部：デバッグ設定 ＆ 内部計算ログ -->
+        <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818;">
+          <div class="card-header" style="color: #60a5fa; margin-bottom: 6px;">モデル定数のリアルタイム調整</div>
+          <div class="grid-4" style="margin-bottom: 8px;">
+            <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="calculate()"></div>
+          </div>
+          <div class="grid-5">
+            <div class="input-group"><span class="input-label">飽和時間 T_min (分)</span><input type="number" id="paramTmin" step="1" value="0" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">短距離閾値 (分)</span><input type="number" id="paramShortThreshold" step="1" value="60" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">短距離係数</span><input type="number" id="paramShortCoeff" step="0.005" value="0.08" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">減衰開始時間 T_start (分)</span><input type="number" id="paramTstart" step="5" value="120" onchange="calculate()"></div>
+            <div class="input-group"><span class="input-label">減衰パワー p</span><input type="number" id="paramP" step="0.1" value="1.0" onchange="calculate()"></div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px;">ピンポイント区間の内部計算ログ</div>
+          <div id="pairDebugInfo" style="padding: 8px; background: #111; border: 1px solid #333; border-radius: 6px; font-size: 10px; color: #aaa; font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div> <!-- /.main-grid-pc -->
 
   <script>
+    const STORAGE_KEY = "traffic_sim_ver3_data";
+
     const defaultCities = [
       { name: "東京", p: 100, accessAir: 60 },
       { name: "新横浜", p: 60, accessAir: 60 },
@@ -572,6 +761,114 @@
     let odResultsMatrix = {};
     let allModeNames = [];
 
+    // --- ローカルストレージ自動保存 ---
+    function saveToLocalStorage() {
+      try {
+        const state = {
+          simName: document.getElementById("simNameInput") ? document.getElementById("simNameInput").value : "東海道・山陽新幹線",
+          params: {
+            K: Number(document.getElementById("paramK").value),
+            alpha: Number(document.getElementById("paramAlpha").value),
+            gamma: Number(document.getElementById("paramGamma").value),
+            lambda: Number(document.getElementById("paramLambda").value),
+            Tmin: Number(document.getElementById("paramTmin").value),
+            shortThreshold: Number(document.getElementById("paramShortThreshold").value),
+            shortCoeff: Number(document.getElementById("paramShortCoeff").value)
+          },
+          cities: cities,
+          modeA: modeA,
+          modeB: modeB,
+          selectOrig: document.getElementById("selectOrig") ? document.getElementById("selectOrig").value : "",
+          selectDest: document.getElementById("selectDest") ? document.getElementById("selectDest").value : ""
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn("localStorage への保存に失敗しました:", e);
+      }
+    }
+
+    // --- ローカルストレージ自動復元 ---
+    function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return false;
+
+        const state = JSON.parse(saved);
+
+        if (state.simName && document.getElementById("simNameInput")) {
+          document.getElementById("simNameInput").value = state.simName;
+        }
+
+        if (state.params) {
+          if (state.params.K !== undefined) document.getElementById("paramK").value = state.params.K;
+          if (state.params.alpha !== undefined) document.getElementById("paramAlpha").value = state.params.alpha;
+          if (state.params.gamma !== undefined) document.getElementById("paramGamma").value = state.params.gamma;
+          if (state.params.lambda !== undefined) document.getElementById("paramLambda").value = state.params.lambda;
+          if (state.params.Tmin !== undefined) document.getElementById("paramTmin").value = state.params.Tmin;
+          if (state.params.shortThreshold !== undefined) document.getElementById("paramShortThreshold").value = state.params.shortThreshold;
+          if (state.params.shortCoeff !== undefined) document.getElementById("paramShortCoeff").value = state.params.shortCoeff;
+        }
+
+        if (state.cities && Array.isArray(state.cities)) cities = state.cities;
+        if (state.modeA && Array.isArray(state.modeA)) modeA = state.modeA;
+        if (state.modeB && Array.isArray(state.modeB)) modeB = state.modeB;
+
+        return state;
+      } catch (e) {
+        console.warn("localStorage からの読み込みに失敗しました:", e);
+        return false;
+      }
+    }
+
+    // --- 動的高さ対応のスクロール共通関数 ---
+    function scrollToTarget(targetElem) {
+      if (!targetElem) return;
+      
+      const stickyBar = document.querySelector(".sticky-action-bar");
+      const toolbarHeight = stickyBar ? stickyBar.offsetHeight : 0;
+      
+      const elementPosition = targetElem.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - toolbarHeight - 8;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+
+    // --- 動的ナビゲーションボタンの描画 ---
+    function renderDynamicNavTabs() {
+      const container = document.getElementById("dynamicNavTabs");
+      if (!container) return;
+
+      let html = '';
+
+      html += `<button class="btn-nav-jump" style="border-color: #4b5563; color: #9ca3af;" onclick="scrollToTarget(document.getElementById('sec-city'))">① 都市</button>`;
+
+      modeA.forEach((mA, idx) => {
+        if (mA.enabled) {
+          const modeColor = mA.color || "#3b82f6";
+          html += `<button class="btn-nav-jump" style="border-color: ${modeColor}; color: ${modeColor};" onclick="scrollToModeA(${idx})">${mA.name}</button>`;
+        }
+      });
+
+      const hasEnabledModeB = modeB.some(mB => mB.enabled !== false && mB.freq > 0);
+      if (hasEnabledModeB) {
+        html += `<button class="btn-nav-jump" style="border-color: #f59e0b; color: #f59e0b;" onclick="scrollToTarget(document.getElementById('sec-modeb'))">航空機</button>`;
+      }
+
+      html += `<button class="btn-nav-jump" style="border-color: #2563eb; color: #60a5fa; background: #1e293b;" onclick="scrollToTarget(document.getElementById('sec-result'))">③ 結果</button>`;
+
+      container.innerHTML = html;
+    }
+
+    function scrollToModeA(index) {
+      const modeItems = document.querySelectorAll("#modeAContainer .mode-item");
+      if (modeItems[index]) {
+        scrollToTarget(modeItems[index]);
+      }
+    }
+
     function renderCitiesTable() {
       const tbody = document.getElementById("cityTableBody");
       tbody.innerHTML = "";
@@ -582,8 +879,8 @@
 
         tr.innerHTML = `
           <td><input type="text" class="text-left" value="${c.name}" onchange="cities[${idx}].name=this.value; syncCityNames();"></td>
-          <td><input type="number" value="${c.p}" onchange="cities[${idx}].p=Number(this.value); calculate();"></td>
-          <td><input type="number" value="${c.accessAir}" onchange="cities[${idx}].accessAir=Number(this.value); calculate();"></td>
+          <td><input type="number" value="${c.p}" onchange="cities[${idx}].p=Number(this.value);"></td>
+          <td><input type="number" value="${c.accessAir}" onchange="cities[${idx}].accessAir=Number(this.value);"></td>
           <td style="white-space: nowrap;">
             <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:2px;" onclick="moveCity(${idx}, -1)" ${upDisabled}>▲</button>
             <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:4px;" onclick="moveCity(${idx}, 1)" ${downDisabled}>▼</button>
@@ -608,7 +905,6 @@
 
     function confirmCityOrder() {
       renderModeA();
-      calculate();
     }
 
     function renderModeA() {
@@ -668,22 +964,23 @@
           <div class="mode-item-top">
             <div style="display:flex; align-items:center; gap:6px;">
               <span class="color-dot" style="background:${mA.color}"></span>
-              <input type="text" value="${mA.name}" style="background:transparent; border:none; border-bottom:1px dashed #666; color:#fff; font-weight:bold; width:80px;" onchange="modeA[${idx}].name=this.value">
+              <input type="text" value="${mA.name}" style="background:transparent; border:none; border-bottom:1px dashed #666; color:#fff; font-weight:bold; width:80px;" onchange="modeA[${idx}].name=this.value;">
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <div style="display:flex; align-items:center; gap:3px;">
                 <span style="font-size:10px; color:#aaa;">アクセス定数:</span>
-                <input type="number" value="${mA.accessTime || 0}" style="width:42px; padding:2px 4px;" onchange="modeA[${idx}].accessTime=Number(this.value); calculate();">
+                <input type="number" value="${mA.accessTime || 0}" style="width:42px; padding:2px 4px;" onchange="modeA[${idx}].accessTime=Number(this.value);">
                 <span style="font-size:10px; color:#aaa;">分</span>
               </div>
               <label style="font-size:10px; color:#aaa; display:flex; align-items:center; gap:2px; cursor:pointer;">
-                <input type="checkbox" ${mA.useShortPenalty !== false ? 'checked' : ''} onchange="modeA[${idx}].useShortPenalty=this.checked; calculate();">
+                <input type="checkbox" ${mA.useShortPenalty !== false ? 'checked' : ''} onchange="modeA[${idx}].useShortPenalty=this.checked;">
                 短距離補正
               </label>
               <label class="switch-wrap">
-                <input type="checkbox" ${mA.enabled ? 'checked' : ''} onchange="modeA[${idx}].enabled=this.checked; calculate();">
+                <input type="checkbox" ${mA.enabled ? 'checked' : ''} onchange="modeA[${idx}].enabled=this.checked; renderDynamicNavTabs();">
                 <span class="switch-slider"></span>
               </label>
+
             </div>
           </div>
 
@@ -718,10 +1015,10 @@
       modeB.forEach((mB, idx) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><input type="text" class="text-left" value="${mB.orig}" onchange="modeB[${idx}].orig=this.value"></td>
-          <td><input type="text" class="text-left" value="${mB.dest}" onchange="modeB[${idx}].dest=this.value"></td>
-          <td><input type="number" value="${mB.travel}" onchange="modeB[${idx}].travel=Number(this.value); calculate();"></td>
-          <td><input type="number" step="0.5" value="${mB.freq}" onchange="modeB[${idx}].freq=Number(this.value); calculate();"></td>
+          <td><input type="text" class="text-left" value="${mB.orig}" onchange="modeB[${idx}].orig=this.value;"></td>
+          <td><input type="text" class="text-left" value="${mB.dest}" onchange="modeB[${idx}].dest=this.value;"></td>
+          <td><input type="number" value="${mB.travel}" onchange="modeB[${idx}].travel=Number(this.value);"></td>
+          <td><input type="number" step="0.5" value="${mB.freq}" onchange="modeB[${idx}].freq=Number(this.value);"></td>
           <td><button class="btn-del" onclick="deleteModeB(${idx})">削除</button></td>
         `;
         tbody.appendChild(tr);
@@ -735,7 +1032,6 @@
         modeA[mAIdx].stations.push(st);
       }
       st.travel = (val === "-" || val.trim() === "") ? null : Number(val);
-      calculate();
     }
 
     function updateModeASegmentFreq(mAIdx, fromCity, toCity, val) {
@@ -746,7 +1042,6 @@
         modeA[mAIdx].segmentFreqs.push(sf);
       }
       sf.freq = Number(val);
-      calculate();
     }
 
     function getPathMinFreq(mA, origIdx, destIdx) {
@@ -847,7 +1142,7 @@
       const simName = document.getElementById("simNameInput").value.trim() || "無題シミュレーション";
       
       const configData = {
-        version: "2.2",
+        version: "3.0",
         simName: simName,
         timestamp: new Date().toISOString(),
         params: {
@@ -925,6 +1220,7 @@
           renderModeA();
           renderModeBTable();
           calculate();
+          renderDynamicNavTabs();
 
           alert(`設定「${config.simName || file.name}」を正常に読み込みました。`);
         } catch (err) {
@@ -936,15 +1232,19 @@
       reader.readAsText(file);
     }
 
+    // --- デフォルトに戻す ---
     function resetDefaults() {
+      localStorage.removeItem(STORAGE_KEY);
+
       document.getElementById("paramK").value = 0.040;
       document.getElementById("paramAlpha").value = 0.90;
       document.getElementById("paramGamma").value = 0.90;
       document.getElementById("paramLambda").value = 0.03;
-      document.getElementById("paramTmin").value = 20;
-      document.getElementById("paramShortThreshold").value = 25;
-      document.getElementById("paramShortCoeff").value = 0.030;
-      
+      document.getElementById("paramTmin").value = 0;
+      document.getElementById("paramShortThreshold").value = 60;
+      document.getElementById("paramShortCoeff").value = 0.020;
+      document.getElementById("paramTstart").value = 120;
+      document.getElementById("paramP").value = 1.0;
       document.getElementById("simNameInput").value = "東海道・山陽新幹線";
 
       cities = JSON.parse(JSON.stringify(defaultCities));
@@ -960,18 +1260,25 @@
       renderModeA();
       renderModeBTable();
       calculate();
+      renderDynamicNavTabs();
     }
     
-    // --- 需要計算コアロジック (飽和型重力モデル ＋ 短距離抵抗) ---
+    // --- 需要計算コアロジック ---
     function calculate() {
       const K = Number(document.getElementById("paramK").value) || 0.040;
       const alpha = Number(document.getElementById("paramAlpha").value) || 0.90;
       const gamma = Number(document.getElementById("paramGamma").value) || 0.90;
       const lambda = Number(document.getElementById("paramLambda").value) || 0.03;
 
-      const Tmin = Number(document.getElementById("paramTmin").value) || 20;
-      const shortThreshold = Number(document.getElementById("paramShortThreshold").value) || 25;
-      const shortCoeff = Number(document.getElementById("paramShortCoeff").value) || 0.03;
+      const Tmin = Number(document.getElementById("paramTmin").value) || 0.1;
+      const shortThreshold = Number(document.getElementById("paramShortThreshold").value) || 45;
+      const shortCoeff = Number(document.getElementById("paramShortCoeff").value) || 0.200;
+
+      // --- 距離的スケーリング用のパラメータ取得 ---
+      const TstartElem = document.getElementById("paramTstart");
+      const paramPElem = document.getElementById("paramP");
+      const Tstart = TstartElem ? (Number(TstartElem.value) || 120) : 120;
+      const paramP = paramPElem ? (Number(paramPElem.value) || 1.0) : 1.0;
 
       odResultsMatrix = {};
 
@@ -989,6 +1296,7 @@
 
           let availableModes = [];
 
+          // モードA（路線型）の探索
           modeA.forEach(mA => {
             if (!mA.enabled) return;
             const stOrig = mA.stations.find(s => s.cityName === cOrig.name);
@@ -1001,6 +1309,7 @@
                 const waitTime = 60 / (2 * minFreq);
                 const accessTime = mA.accessTime || 0;
 
+                // Ver3.0通りの短距離ペナルティ計算
                 let shortPenalty = 0;
                 if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
                   shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
@@ -1011,6 +1320,7 @@
                 availableModes.push({
                   name: mA.name,
                   type: 'A',
+                  inVehicleTime: inVehicleTime,
                   Tk: Tk,
                   color: mA.color
                 });
@@ -1018,6 +1328,7 @@
             }
           });
 
+          // モードB（航空機）の探索
           modeB.forEach(mB => {
             if (!mB.enabled || mB.freq <= 0) return;
             if ((mB.orig === cOrig.name && mB.dest === cDest.name) || (mB.orig === cDest.name && mB.dest === cOrig.name)) {
@@ -1027,6 +1338,7 @@
 
               availableModes.push({
                 name: "航空機",
+                inVehicleTime: mB.travel,
                 type: 'B',
                 Tk: Tk,
                 color: mB.color || "#f59e0b"
@@ -1043,8 +1355,23 @@
               sumExp += m.expV;
             });
 
-            const Teff = -Math.log(sumExp) / lambda;
-            const Mtotal = K * Math.pow(cOrig.p * cDest.p, alpha) / Math.pow(Teff + Tmin, gamma);
+            // Logsum理論による生の総合等価時間
+            const rawTeff = -Math.log(sumExp) / lambda;
+
+            // ★ Teff の下限ガード：最速モードの純所要時間（Tk）を下回らないように補正
+            const minTk = Math.min(...availableModes.map(m => m.Tk));
+            const Teff = Math.max(minTk, rawTeff);
+
+            // --- ★ 距離的スケーリング S(maxTk) の適用 ---
+            // --- ★ 最長の純乗車時間（inVehicleTime）を取得 ---
+            const maxInVehicleTime = Math.max(...availableModes.map(m => m.inVehicleTime));
+            
+            // 最長乗車時間が Tstart 以上の場合は 1.0、0 の場合は 0.0 へ減衰
+            const u = Math.min(1.0, Math.max(0.0, maxInVehicleTime / Tstart));
+            const scalingS = Math.pow(u, paramP);
+
+            // 重力モデル需要量 Mtotal の算出
+            const Mtotal = (K * Math.pow(cOrig.p * cDest.p, alpha) / Math.pow(Teff + Tmin, gamma)) * scalingS;
 
             availableModes.forEach(m => {
               m.share = (m.expV / sumExp) * 100;
@@ -1053,7 +1380,7 @@
 
             odResultsMatrix[cOrig.name][cDest.name] = {
               Teff: Teff,
-              Mtotal: Mtotal,
+              Mtotal: isNaN(Mtotal) ? 0 : Mtotal,
               modes: availableModes
             };
           }
@@ -1064,6 +1391,8 @@
       renderOdFilterControls();
       renderOdMatrixTable();
       renderCrossSectionChart();
+
+      saveToLocalStorage();
     }
 
     function updatePairAnalysis() {
@@ -1331,11 +1660,21 @@
       });
     }
 
+    // --- 初期化 ---
     document.addEventListener("DOMContentLoaded", function() {
+      const loaded = loadFromLocalStorage();
+      
       renderCitiesTable();
       renderModeA();
       renderModeBTable();
+
+      if (loaded) {
+        if (loaded.selectOrig) document.getElementById("selectOrig").value = loaded.selectOrig;
+        if (loaded.selectDest) document.getElementById("selectDest").value = loaded.selectDest;
+      }
+
       calculate();
+      renderDynamicNavTabs();
     });
   </script>
 </body>
