@@ -1,771 +1,1248 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>交通需要予測シミュレーター ver4.0</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-    body {
-      background-color: #121212;
-      color: #e0e0e0;
-      padding: 12px;
-      max-width: none;
-      margin: 0 auto;
-      line-height: 1.4;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    .header-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .main-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: -0.3px;
-    }
-    .sub-title {
-      font-size: 11px;
-      color: #888888;
-      margin-top: 1px;
-    }
-    .btn-debug-toggle {
-      background: #252525;
-      color: #bbbbbb;
-      border: 1px solid #3a3a3a;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-debug-toggle:active { background: #333333; }
-    
-    .btn-config-action {
-      background: #252525;
-      color: #93c5fd;
-      border: 1px solid #1d4ed8;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-config-action:active { background: #1e3a8a; }
-
-    .card {
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .card-header {
-      font-size: 13px;
-      font-weight: 700;
-      color: #dddddd;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
-    .grid-5 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 6px; }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-    }
-    .input-label {
-      font-size: 10px;
-      color: #999999;
-      margin-bottom: 3px;
-      font-weight: 500;
-    }
-    input[type="number"], input[type="text"], select {
-      width: 100%;
-      background: #282828;
-      border: 1px solid #383838;
-      color: #ffffff;
-      padding: 6px 5px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      text-align: center;
-    }
-    input:focus, select:focus {
-      border-color: #3b82f6 !important;
-      outline: none;
-    }
-
-    .btn-add {
-      background: #1e3a8a;
-      color: #93c5fd;
-      border: 1px solid #1d4ed8;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 6px;
-    }
-    .btn-del {
-      background: #3f1d1d;
-      color: #fca5a5;
-      border: 1px solid #7f1d1d;
-      padding: 4px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      cursor: pointer;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr 1.6fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .btn-reset {
-      background: #282828;
-      color: #cccccc;
-      border: 1px solid #3a3a3a;
-      padding: 11px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-calc {
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      padding: 11px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
-
-    .mode-item {
-      background: #242424;
-      border: 1px solid #303030;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-    }
-    .mode-item-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #303030;
-    }
-
-    .switch-wrap {
-      position: relative;
-      display: inline-block;
-      width: 34px;
-      height: 18px;
-    }
-    .switch-wrap input { opacity: 0; width: 0; height: 0; }
-    .switch-slider {
-      position: absolute; cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #444444; transition: .2s; border-radius: 20px;
-    }
-    .switch-slider:before {
-      position: absolute; content: "";
-      height: 12px; width: 12px; left: 3px; bottom: 3px;
-      background-color: white; transition: .2s; border-radius: 50%;
-    }
-    input:checked + .switch-slider { background-color: #2563eb; }
-    input:checked + .switch-slider:before { transform: translateX(16px); }
-
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    th {
-      text-align: center;
-      color: #888888;
-      padding: 6px;
-      border-bottom: 1px solid #303030;
-      font-weight: 600;
-      background: #1e1e1e;
-    }
-    td {
-      padding: 5px 4px;
-      border-bottom: 1px solid #242424;
-      text-align: center;
-    }
-    .text-left { text-align: left; }
-    .text-right { text-align: right; }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .summary-card {
-      background: #242424;
-      border: 1px solid #303030;
-      border-radius: 8px;
-      padding: 8px;
-      text-align: center;
-    }
-    .summary-title { font-size: 10px; color: #888888; margin-bottom: 2px; }
-    .summary-value { font-size: 16px; font-weight: 800; }
-    .val-blue { color: #60a5fa; }
-    .val-purple { color: #a78bfa; }
-
-    .share-bar-container {
-      height: 18px;
-      background: #282828;
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      margin-bottom: 12px;
-    }
-    .share-segment { height: 100%; transition: width 0.2s ease-out; }
-    .color-dot {
-      display: inline-block; width: 7px; height: 7px;
-      border-radius: 50%; margin-right: 5px;
-    }
-
-    .chart-container {
-      width: 100%;
-      height: 180px;
-      position: relative;
-      margin-top: 10px;
-    }
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .hidden { display: none !important; }
-    
-    /* 追従操作バー (スマホ標準) */
-    .sticky-action-bar {
-      position: -webkit-sticky;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: rgba(18, 18, 18, 0.95);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 8px 0;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #2a2a2a;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn-calc-sticky {
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-      white-space: nowrap;
-    }
-    .btn-calc-sticky:active { background: #1d4ed8; }
-
-    .btn-undo-redo {
-      background: #252525;
-      color: #888888;
-      border: 1px solid #3a3a3a;
-      padding: 6px 8px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-    
-    /* 動的モードジャンプボタン */
-    .nav-tabs-sticky {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-top: 4px;
-      width: 100%;
-    }
-    .btn-nav-jump {
-      background: #1e1e1e;
-      color: #dddddd;
-      border: 1px solid #444444;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-    }
-    .btn-nav-jump:hover {
-      background: #2a2a2a;
-      filter: brightness(1.2);
-    }
-    .btn-nav-jump:active {
-      transform: translateY(1px);
-    }
-
-    /* スマホ・標準画面用スタイル */
-    .top-title-area {
-      margin-bottom: 8px;
-    }
-    .sim-name-box {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-    
-    /* ================================================== */
-    /* PC・大画面向けレスポンシブ対応 (1920px以上)        */
-    /* ================================================== */
-    @media (min-width: 1920px) {
-      html, body {
-        height: 100vh;
-        overflow: hidden;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>交通需要予測シミュレーター ver6.0</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       }
       body {
+        background-color: #121212;
+        color: #e0e0e0;
+        padding: 12px;
+        max-width: none;
+        margin: 0 auto;
+        line-height: 1.4;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .main-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.3px;
+      }
+      .sub-title {
+        font-size: 11px;
+        color: #888888;
+        margin-top: 1px;
+      }
+      .btn-debug-toggle {
+        background: #252525;
+        color: #bbbbbb;
+        border: 1px solid #3a3a3a;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-debug-toggle:active {
+        background: #333333;
+      }
+
+      .btn-config-action {
+        background: #252525;
+        color: #93c5fd;
+        border: 1px solid #1d4ed8;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-config-action:active {
+        background: #1e3a8a;
+      }
+
+      .card {
+        background: #1e1e1e;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .card-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: #dddddd;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .grid-5 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        gap: 6px;
+      }
+
+      .input-group {
         display: flex;
         flex-direction: column;
-        padding: 10px 16px;
       }
-
-      .top-controls-pc {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 10px;
-        background: #181818;
-        padding: 6px 12px;
-        border-radius: 8px;
-        border: 1px solid #2a2a2a;
+      .input-label {
+        font-size: 10px;
+        color: #999999;
+        margin-bottom: 3px;
+        font-weight: 500;
       }
-
-      .top-title-area {
-        margin-bottom: 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+      input[type="number"],
+      input[type="text"],
+      select {
+        width: 100%;
+        background: #282828;
+        border: 1px solid #383838;
+        color: #ffffff;
+        padding: 6px 5px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
       }
-
-      .sim-name-box {
-        margin-bottom: 0;
+      /* 数値入力（input type="number"）の上下矢印（スピンボタン）を非表示 */
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
       }
-
-      .sticky-action-bar {
-        position: static;
+      input[type="number"] {
+        -moz-appearance: textfield; /* Firefox用 */
+      }
+      input:focus,
+      select:focus {
+        border-color: #3b82f6 !important;
+        outline: none;
+      }
+      /* カラーピッカーのスタイル調整 */
+      input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        cursor: pointer;
         background: transparent;
-        border-bottom: none;
         padding: 0;
-        margin-bottom: 0;
-        backdrop-filter: none;
+      }
+      input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+      }
+      input[type="color"]::-webkit-color-swatch {
+        border: 1px solid #555;
+        border-radius: 50%;
+      }
+      .btn-add {
+        background: #1e3a8a;
+        color: #93c5fd;
+        border: 1px solid #1d4ed8;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 6px;
+      }
+      .btn-del {
+        background: #3f1d1d;
+        color: #fca5a5;
+        border: 1px solid #7f1d1d;
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        cursor: pointer;
       }
 
-      #dynamicNavTabs {
+      .action-row {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .btn-reset {
+        background: #282828;
+        color: #cccccc;
+        border: 1px solid #3a3a3a;
+        padding: 11px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .mode-item {
+        background: #242424;
+        border: 1px solid #303030;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+      }
+      .mode-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #303030;
+      }
+
+      .switch-wrap {
+        position: relative;
+        display: inline-block;
+        width: 34px;
+        height: 18px;
+      }
+      .switch-wrap input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #444444;
+        transition: 0.2s;
+        border-radius: 20px;
+      }
+      .switch-slider:before {
+        position: absolute;
+        content: "";
+        height: 12px;
+        width: 12px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.2s;
+        border-radius: 50%;
+      }
+      input:checked + .switch-slider {
+        background-color: #2563eb;
+      }
+      input:checked + .switch-slider:before {
+        transform: translateX(16px);
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      th {
+        text-align: center;
+        color: #888888;
+        padding: 6px;
+        border-bottom: 1px solid #303030;
+        font-weight: 600;
+        background: #1e1e1e;
+      }
+      td {
+        padding: 5px 4px;
+        border-bottom: 1px solid #242424;
+        text-align: center;
+      }
+      .text-left {
+        text-align: left;
+      }
+      .text-right {
+        text-align: right;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .summary-card {
+        background: #242424;
+        border: 1px solid #303030;
+        border-radius: 8px;
+        padding: 8px;
+        text-align: center;
+      }
+      .summary-title {
+        font-size: 10px;
+        color: #888888;
+        margin-bottom: 2px;
+      }
+      .summary-value {
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .val-blue {
+        color: #60a5fa;
+      }
+      .val-purple {
+        color: #a78bfa;
+      }
+
+      .share-bar-container {
+        height: 18px;
+        background: #282828;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        margin-bottom: 12px;
+      }
+      .share-segment {
+        height: 100%;
+        transition: width 0.2s ease-out;
+      }
+      .color-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+
+      .chart-container {
+        width: 100%;
+        height: 180px;
+        position: relative;
+        margin-top: 10px;
+      }
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .hidden {
         display: none !important;
       }
 
-      .main-grid-pc {
-        display: grid;
-        grid-template-columns: 1fr 1.2fr 1fr 1.3fr;
-        gap: 10px;
-        flex: 1;
-        min-height: 0;
+      /* 追従操作バー (スマホ標準) */
+      .sticky-action-bar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(18, 18, 18, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 8px 0;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #2a2a2a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
-      .main-grid-pc > .card {
-        height: 100%;
-        margin-bottom: 0;
+      .btn-calc-sticky {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        white-space: nowrap;
+      }
+      .btn-calc-sticky:active {
+        background: #1d4ed8;
+      }
+
+      .btn-undo-redo {
+        background: #252525;
+        color: #888888;
+        border: 1px solid #3a3a3a;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      /* 動的モードジャンプボタン */
+      .nav-tabs-sticky {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+        width: 100%;
+      }
+      .btn-nav-jump {
+        background: #1e1e1e;
+        color: #dddddd;
+        border: 1px solid #444444;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+      }
+      .btn-nav-jump:hover {
+        background: #2a2a2a;
+        filter: brightness(1.2);
+      }
+      .btn-nav-jump:active {
+        transform: translateY(1px);
+      }
+
+      /* モーダルダイアログ */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+      }
+      .modal-card {
+        background: #1e1e1e;
+        border: 1px solid #3b82f6;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
         display: flex;
         flex-direction: column;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         overflow: hidden;
       }
-
-      .card-scroll-body {
-        flex: 1;
+      .modal-header {
+        padding: 12px 16px;
+        background: #252525;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-body {
+        padding: 16px;
         overflow-y: auto;
-        padding-right: 4px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
       }
-      
-      .card-scroll-body::-webkit-scrollbar { width: 5px; }
-      .card-scroll-body::-webkit-scrollbar-track { background: #1a1a1a; }
-      .card-scroll-body::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- タイトル & シミュレーション名 -->
-  <div class="top-controls-pc">
-    <div class="top-title-area">
-      <div>
-        <div class="main-title">交通需要予測シミュレーター ver4.0</div>
-        <div class="sub-title">全線シミュレーション (Logsum統合・マルチモード)</div>
-      </div>
-      <div class="sim-name-box">
-        <span class="input-label" style="margin: 0; white-space: nowrap;">名称:</span>
-        <input type="text" id="simNameInput" value="東海道・山陽新幹線" style="text-align: left; padding: 4px 8px; width: 180px;" onchange="currentSimName = this.value;">
-      </div>
-    </div>
-  </div>
-
-  <!-- 操作ボタンバー（スマホではトップ階層にあるため画面上部に綺麗に固定追従します） -->
-  <div class="sticky-action-bar">
-    <div style="display: flex; gap: 4px;">
-      <button class="btn-config-action" onclick="exportConfig()">📥 保存</button>
-      <button class="btn-config-action" onclick="document.getElementById('configFileInput').click()">📤 読み込み</button>
-      <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importConfig(event)">
-    </div>
-
-    <div style="display: flex; gap: 6px; align-items: center;">
-      <button class="btn-undo-redo" title="元に戻す (将来実装)" disabled>↶</button>
-      <button class="btn-undo-redo" title="やり直す (将来実装)" disabled>↷</button>
-      <button class="btn-calc-sticky" onclick="calculate()">⚡ 計算する</button>
-    </div>
-    
-    <!-- 動的モードジャンプタブ (スマホ時のみ表示) -->
-    <div class="nav-tabs-sticky" id="dynamicNavTabs"></div>
-  </div>
-
-  <!-- メインコンテンツ領域（PCで4列グリッド、スマホで縦1列） -->
-  <div class="main-grid-pc">
-
-    <!-- ① 都市マスター設定 -->
-    <div class="card" id="sec-city">
-      <div class="card-header">① 都市マスター設定</div>
-      <div class="card-scroll-body">
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th class="text-left">都市名</th>
-                <th>ポテンシャル</th>
-                <th>航空アクセス(分)</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="cityTableBody"></tbody>
-          </table>
-        </div>
-        <div style="display: flex; gap: 6px; margin-top: 6px;">
-          <button class="btn-add" style="margin-top:0;" onclick="addCity()">＋ 都市を追加</button>
-          <button class="btn-add" style="margin-top:0; background: #065f46; border-color: #047857; color: #a7f3d0;" onclick="confirmCityOrder()">✓ 並び順を確定</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ② 交通モード設定 【モードA】 -->
-    <div class="card">
-      <div class="card-header">② 交通モード設定（モードA）</div>
-      <div class="card-scroll-body">
-        <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px;">【モードA】 路線型（新幹線・リニア・在来線等：最大5種）</div>
-        <div id="modeAContainer"></div>
-      </div>
-    </div>
-
-    <!-- ② 交通モード設定 【モードB】 -->
-    <div class="card" id="sec-modeb">
-      <div class="card-header">② 交通モード設定（モードB）</div>
-      <div class="card-scroll-body">
-        <div style="font-size: 11px; font-weight: bold; color: #f59e0b; margin-bottom: 6px;">【モードB】 航空機モード（点対点）</div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th class="text-left">出発都市</th>
-                <th class="text-left">到着都市</th>
-                <th>飛行時間(分)</th>
-                <th>便数(本/h)</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="modeBTableBody"></tbody>
-          </table>
-        </div>
-        <button class="btn-add" style="border-color: #d97706; background: #451a03; color: #fde68a;" onclick="addModeBRow()">＋ 航空路線を追加</button>
-      </div>
-    </div>
-
-    <!-- ③ アナリティクス＆結果表示 -->
-    <div class="card" id="sec-result">
-      <div class="card-header">③ 計算結果＆分析</div>
-      <div class="card-scroll-body">
-
-        <!-- 1. 任意2都市選択プレビュー -->
-        <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px;">1. 区間ピンポイント分析</div>
-        <div class="grid-2" style="margin-bottom: 10px;">
-          <div class="input-group">
-            <span class="input-label">起点都市</span>
-            <select id="selectOrig" onchange="updatePairAnalysis()"></select>
-          </div>
-          <div class="input-group">
-            <span class="input-label">終点都市</span>
-            <select id="selectDest" onchange="updatePairAnalysis()"></select>
-          </div>
-        </div>
-
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-title">総需要量 M<sub>total</sub></div>
-            <div class="summary-value val-blue" id="pairMtotal">--</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
-            <div class="summary-value val-purple" id="pairTeff">--</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600;">機関別市場シェア (%)</div>
-          <div class="share-bar-container" id="pairShareBar"></div>
-        </div>
-
-        <div class="table-container" style="margin-bottom: 16px;">
-          <table>
-            <thead>
-              <tr>
-                <th class="text-left">モード</th>
-                <th class="text-right">総合時間 T<sub>k</sub></th>
-                <th class="text-right">需要量 M<sub>k</sub></th>
-                <th class="text-right">シェア</th>
-              </tr>
-            </thead>
-            <tbody id="pairTableBody"></tbody>
-          </table>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
-
-        <!-- 2. 全都市間需要マトリクス -->
-        <div class="card-header" style="margin-bottom: 6px;">
-          <span>2. 都市間需要マトリクス (OD表)</span>
-        </div>
-        <div style="font-size: 10px; color: #999; margin-bottom: 6px;">集計対象モードを選択（チェックを入れたモードの需要を足し合わせます）</div>
-        <div id="odFilterContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;"></div>
-        
-        <div class="table-container" style="margin-bottom: 16px;">
-          <table id="odMatrixTable"></table>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0;">
-
-        <!-- 3. 通過需要（断面交通量）の積み上げ面グラフ -->
-        <div class="card-header" style="margin-bottom: 4px;">
-          <span>3. 区間別通過需要（断面交通量）</span>
-        </div>
-        <div style="font-size: 10px; color: #999; margin-bottom: 6px;">モードA（路線型）の区間ごとの通過需要を積み上げて表示</div>
-        
-        <div class="chart-container">
-          <canvas id="crossSectionCanvas"></canvas>
-        </div>
-        <div id="chartLegend" style="display: flex; justify-content: center; gap: 12px; margin-top: 8px; font-size: 10px;"></div>
-
-        <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0;">
-
-        <!-- 4. ページ最下部：デバッグパネル開閉トグル ＆ リセットボタン -->
-        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px;">
-          <button class="btn-reset" style="padding: 6px 10px; font-size: 11px;" onclick="resetDefaults()">↺ デフォルトにリセット</button>
-          <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
-        </div>
-
-        <!-- 5. ページ最下部：デバッグ設定 ＆ 内部計算ログ -->
-        <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818;">
-          <div class="card-header" style="color: #60a5fa; margin-bottom: 6px;">モデル定数のリアルタイム調整</div>
-          <div class="grid-4" style="margin-bottom: 8px;">
-            <div class="input-group"><span class="input-label">定数 K</span><input type="number" id="paramK" step="0.001" value="0.040" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">規模 α</span><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">抵抗 γ</span><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">感度 λ</span><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="calculate()"></div>
-          </div>
-          <div class="grid-5">
-            <div class="input-group"><span class="input-label">飽和時間 T_min (分)</span><input type="number" id="paramTmin" step="1" value="0" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">短距離閾値 (分)</span><input type="number" id="paramShortThreshold" step="1" value="60" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">短距離係数</span><input type="number" id="paramShortCoeff" step="0.005" value="0.08" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">減衰開始時間 T_start (分)</span><input type="number" id="paramTstart" step="5" value="120" onchange="calculate()"></div>
-            <div class="input-group"><span class="input-label">減衰パワー p</span><input type="number" id="paramP" step="0.1" value="1.0" onchange="calculate()"></div>
-          </div>
-
-          <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px;">ピンポイント区間の内部計算ログ</div>
-          <div id="pairDebugInfo" style="padding: 8px; background: #111; border: 1px solid #333; border-radius: 6px; font-size: 10px; color: #aaa; font-family: monospace; white-space: pre-wrap; word-break: break-all;"></div>
-        </div>
-
-      </div>
-    </div>
-
-  </div> <!-- /.main-grid-pc -->
-
-  <script>
-    const STORAGE_KEY = "traffic_sim_ver3_data";
-
-    const defaultCities = [
-      { name: "東京", p: 100, accessAir: 60 },
-      { name: "新横浜", p: 60, accessAir: 60 },
-      { name: "名古屋", p: 70, accessAir: 65 },
-      { name: "新大阪", p: 80, accessAir: 55 },
-      { name: "博多", p: 70, accessAir: 50 }
-    ];
-
-    const defaultModeA = [
-      {
-        "name": "のぞみ/みずほ",
-        "enabled": true,
-        "accessTime": 10,
-        "useShortPenalty": true,
-        "color": "#3b82f6",
-        "stations": [
-          { "cityName": "東京", "travel": 0 },
-          { "cityName": "新横浜", "travel": 18 },
-          { "cityName": "名古屋", "travel": 99 },
-          { "cityName": "新大阪", "travel": 150 },
-          { "cityName": "博多", "travel": 297 }
-        ],
-        "segmentFreqs": [
-          { "from": "東京", "to": "新横浜", "freq": 6.5 },
-          { "from": "新横浜", "to": "名古屋", "freq": 6.5 },
-          { "from": "名古屋", "to": "新大阪", "freq": 6.5 },
-          { "from": "新大阪", "to": "博多", "freq": 3 }
-        ]
-      },
-      {
-        "name": "ひかり/さくら",
-        "enabled": true,
-        "accessTime": 10,
-        "useShortPenalty": true,
-        "color": "#06b6d4",
-        "stations": [
-          { "cityName": "東京", "travel": 0 },
-          { "cityName": "新横浜", "travel": 18 },
-          { "cityName": "名古屋", "travel": 118 },
-          { "cityName": "新大阪", "travel": 174 },
-          { "cityName": "博多", "travel": 337 }
-        ],
-        "segmentFreqs": [
-          { "from": "東京", "to": "新横浜", "freq": 2 },
-          { "from": "新横浜", "to": "名古屋", "freq": 2 },
-          { "from": "名古屋", "to": "新大阪", "freq": 1 },
-          { "from": "新大阪", "to": "博多", "freq": 1 }
-        ]
-      },
-      {
-        "name": "こだま",
-        "enabled": true,
-        "accessTime": 10,
-        "useShortPenalty": true,
-        "color": "#10b981",
-        "stations": [
-          { "cityName": "東京", "travel": 0 },
-          { "cityName": "新横浜", "travel": 18 },
-          { "cityName": "名古屋", "travel": 160 },
-          { "cityName": "新大阪", "travel": 234 },
-          { "cityName": "博多", "travel": 490 }
-        ],
-        "segmentFreqs": [
-          { "from": "東京", "to": "新横浜", "freq": 2 },
-          { "from": "新横浜", "to": "名古屋", "freq": 2 },
-          { "from": "名古屋", "to": "新大阪", "freq": 2 },
-          { "from": "新大阪", "to": "博多", "freq": 1 }
-        ]
-      },
-      {
-        "name": "リニア",
-        "enabled": false,
-        "accessTime": 20,
-        "useShortPenalty": true,
-        "color": "#ec4899",
-        "stations": [
-          { "cityName": "東京", "travel": 0 },
-          { "cityName": "名古屋", "travel": 40 },
-          { "cityName": "新大阪", "travel": 67 },
-          { "cityName": "博多", "travel": 230 }
-        ],
-        "segmentFreqs": [
-          { "from": "東京", "to": "新横浜", "freq": 5 },
-          { "from": "新横浜", "to": "名古屋", "freq": 5 },
-          { "from": "名古屋", "to": "新大阪", "freq": 5 },
-          { "from": "新大阪", "to": "博多", "freq": 3 }
-        ]
-      },
-      {
-        "name": "在来線",
-        "enabled": true,
-        "accessTime": 0,
-        "useShortPenalty": false,
-        "color": "#8b5cf6",
-        "stations": [
-          { "cityName": "東京", "travel": 0 },
-          { "cityName": "新横浜", "travel": 26 },
-          { "cityName": "名古屋", "travel": 370 },
-          { "cityName": "新大阪", "travel": 475 },
-          { "cityName": "博多", "travel": null }
-        ],
-        "segmentFreqs": [
-          { "from": "東京", "to": "新横浜", "freq": 6 },
-          { "from": "新横浜", "to": "名古屋", "freq": 2 },
-          { "from": "名古屋", "to": "新大阪", "freq": 2 },
-          { "from": "新大阪", "to": "博多", "freq": 0 }
-        ]
+      .cell-override {
+        background-color: #1e3a29 !important;
+        border-color: #10b981 !important;
+        color: #6ee7b7 !important;
       }
-    ];
+      /* 未入力（要設定）セルの強調スタイル */
+      .cell-required {
+        background-color: #451a1a !important;
+        border: 1px solid #ef4444 !important;
+        color: #fca5a5 !important;
+      }
+      .cell-required::placeholder {
+        color: transparent; /* 文字としての「要入力」は非表示 */
+      }
+      /* デフォルト（1920px未満）：モードAカード内のジャンプボタンは非表示 */
+      #modeAQuickNavTabs {
+        display: none;
+      }
+      /* PC・大画面向けレスポンシブ対応 (1920px以上) */
+      @media (min-width: 1920px) {
+        html,
+        body {
+          height: 100vh;
+          overflow: hidden;
+        }
+        body {
+          display: flex;
+          flex-direction: column;
+          padding: 10px 16px;
+        }
+        .top-controls-pc {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 10px;
+          background: #181818;
+          padding: 6px 12px;
+          border-radius: 8px;
+          border: 1px solid #2a2a2a;
+        }
+        .top-title-area {
+          margin-bottom: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .sim-name-box {
+          margin-bottom: 0;
+        }
+        .sticky-action-bar {
+          position: static;
+          background: transparent;
+          border-bottom: none;
+          padding: 0;
+          margin-bottom: 0;
+          backdrop-filter: none;
+        }
+        #dynamicNavTabs {
+          display: none !important;
+        }
+        .main-grid-pc {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr 1fr 1.3fr;
+          gap: 10px;
+          flex: 1;
+          min-height: 0;
+        }
+        .main-grid-pc > .card {
+          height: 100%;
+          margin-bottom: 0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .card-scroll-body {
+          flex: 1;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+        .card-scroll-body::-webkit-scrollbar {
+          width: 5px;
+        }
+        .card-scroll-body::-webkit-scrollbar-track {
+          background: #1a1a1a;
+        }
+        .card-scroll-body::-webkit-scrollbar-thumb {
+          background: #333;
+          border-radius: 3px;
+        }
+        #modeAQuickNavTabs {
+          display: flex !important;
+          flex-wrap: wrap;
+          gap: 4px;
+          margin-bottom: 10px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid #2a2a2a;
+        }
+        /* PC大画面時のモーダルレイアウト（左寄せで結果画面を露出・高さを一杯に確保） */
+        .modal-overlay {
+          justify-content: flex-start;
+          padding: 12px 16px;
+        }
+        .modal-card {
+          width: 73vw;
+          max-width: none;
+          height: calc(100vh - 24px);
+          max-height: none;
+        }
+      }
 
-    const defaultModeB = [
-      { "orig": "東京", "dest": "新大阪", "travel": 70, "freq": 2, "color": "#f59e0b", "enabled": true },
-      { "orig": "東京", "dest": "博多", "travel": 110, "freq": 3.5, "color": "#f59e0b", "enabled": true },
-      { "orig": "名古屋", "dest": "博多", "travel": 90, "freq": 1, "color": "#f59e0b", "enabled": true },
-      { "orig": "新大阪", "dest": "博多", "travel": 75, "freq": 1, "color": "#f59e0b", "enabled": true },
-      { "orig": "新横浜", "dest": "新大阪", "travel": 70, "freq": 2, "color": "#f59e0b", "enabled": true },
-      { "orig": "新横浜", "dest": "博多", "travel": 110, "freq": 3.5, "color": "#f59e0b", "enabled": true }
-    ];
+      /* 空港マスターテーブル囲み枠（縦横スクロール領域） */
+      .airport-scroll-container {
+        max-height: 70vh; /* 必要に応じて縦幅の上限を調整 */
+        overflow: auto;
+        position: relative;
+        border: 1px solid #333;
+        border-radius: 6px;
+      }
 
-    let cities = JSON.parse(JSON.stringify(defaultCities));
-    let modeA = JSON.parse(JSON.stringify(defaultModeA));
-    let modeB = JSON.parse(JSON.stringify(defaultModeB));
+      /* テーブル全体の境界線統合設定 */
+      #airportAccessTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+      }
 
-    let odResultsMatrix = {};
-    let allModeNames = [];
+      #airportAccessTable th,
+      #airportAccessTable td {
+        border-bottom: 1px solid #303030;
+        border-right: 1px solid #303030;
+        padding: 4px;
+      }
 
-    // --- ローカルストレージ自動保存 ---
-    function saveToLocalStorage() {
-      try {
-        const state = {
-          simName: document.getElementById("simNameInput") ? document.getElementById("simNameInput").value : "東海道・山陽新幹線",
+      /* 1. 上下スクロール時に空港名ヘッダー（1行目）を最上部に固定 */
+      #airportAccessTable thead th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #1e1e1e !important;
+        box-shadow: 0 1px 0 #444; /* 下境界線の視認性を強化 */
+      }
+
+      /* 2. 左右スクロール時に都市名（1列目）を左端に固定 */
+      #airportAccessTable .sticky-col {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background-color: #181818 !important;
+        border-right: 2px solid #444;
+      }
+
+      /* 3. 左上交差点セル（都市 \ 空港）は最前面(z-index:20)に固定 */
+      #airportAccessTable thead th.sticky-col {
+        z-index: 20;
+        background-color: #1e1e1e !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- タイトル & シミュレーション名 -->
+    <div class="top-controls-pc">
+      <div class="top-title-area">
+        <div>
+          <div class="main-title">交通需要予測シミュレーター ver6.0</div>
+          <div class="sub-title">全線シミュレーション (Logsum統合・ODマトリクス詳細オーバーライド)</div>
+        </div>
+        <div class="sim-name-box">
+          <span class="input-label" style="margin: 0; white-space: nowrap">名称:</span>
+          <input
+            type="text"
+            id="simNameInput"
+            value="東海道・山陽新幹線"
+            style="text-align: left; padding: 4px 8px; width: 180px"
+            onchange="
+              currentSimName = this.value;
+              onDataChange();
+            "
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作ボタンバー -->
+    <div class="sticky-action-bar">
+      <div style="display: flex; gap: 4px">
+        <button class="btn-config-action" onclick="exportConfig()">📥 保存</button>
+        <button class="btn-config-action" onclick="document.getElementById('configFileInput').click()">
+          📤 読み込み
+        </button>
+        <input type="file" id="configFileInput" accept=".json" style="display: none" onchange="importConfig(event)" />
+      </div>
+
+      <div style="display: flex; gap: 6px; align-items: center">
+        <button class="btn-undo-redo" id="btnUndo" title="元に戻す (Ctrl+Z)" onclick="undo()" disabled>↶</button>
+        <button class="btn-undo-redo" id="btnRedo" title="やり直す (Ctrl+Y)" onclick="redo()" disabled>↷</button>
+        <button class="btn-calc-sticky" onclick="calculate()">⚡ 計算する</button>
+      </div>
+
+      <div class="nav-tabs-sticky" id="dynamicNavTabs"></div>
+    </div>
+
+    <!-- メインコンテンツ領域 -->
+    <div class="main-grid-pc">
+      <!-- ① 都市マスター設定 -->
+      <div class="card" id="sec-city">
+        <div class="card-header">① 都市マスター設定</div>
+        <div class="card-scroll-body">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-left">都市名</th>
+                  <th>ポテンシャル</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="cityTableBody"></tbody>
+            </table>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 6px">
+            <button class="btn-add" style="margin-top: 0" onclick="addCity()">＋ 都市を追加</button>
+            <button
+              class="btn-add"
+              style="margin-top: 0; background: #065f46; border-color: #047857; color: #a7f3d0"
+              onclick="confirmCityOrder()"
+            >
+              ✓ 並び順を確定
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 交通モード設定 【モードA】 -->
+      <div class="card">
+        <div class="card-header" style="flex-direction: column; align-items: flex-start; gap: 6px">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <span>② 交通モード設定（モードA）</span>
+            <span style="font-size: 10px; color: #888" id="modeACount"></span>
+          </div>
+
+          <!-- ★ 固定ヘッダー内にジャンプボタンコンテナを移動 -->
+          <div id="modeAQuickNavTabs" style="width: 100%"></div>
+        </div>
+
+        <div class="card-scroll-body">
+          <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px">
+            【モードA】 路線型（新幹線・特急・バス等：最大10種）
+          </div>
+          <div id="modeAContainer"></div>
+
+          <button class="btn-add" id="btnAddModeA" onclick="addModeA()">＋ モードAを追加（最大10種）</button>
+        </div>
+      </div>
+
+      <!-- ② 交通モード設定 【モードB】 -->
+      <div class="card" id="sec-modeb">
+        <div class="card-header">
+          <span>② 交通モード設定（モードB）</span>
+        </div>
+        <div class="card-scroll-body">
+          <!-- 1. 空港マスター＆アクセス時間設定（折りたたみ可能） -->
+          <details
+            style="
+              background: #181818;
+              border: 1px solid #333;
+              border-radius: 6px;
+              padding: 6px 8px;
+              margin-bottom: 10px;
+            "
+            open
+          >
+            <summary
+              style="
+                font-size: 11px;
+                font-weight: bold;
+                color: #f59e0b;
+                cursor: pointer;
+                user-select: none;
+                outline: none;
+              "
+            >
+              ✈️ 空港マスター ＆ アクセス時間(分)
+            </summary>
+
+            <div style="margin-top: 6px">
+              <div class="table-container" style="flex: 1; min-height: 80px; overflow-y: auto">
+                <table id="airportAccessTable">
+                  <!-- JSで動的描画: 都市×空港アクセス行列 -->
+                </table>
+              </div>
+              <div style="display: flex; gap: 6px; margin-top: 6px">
+                <button
+                  class="btn-add"
+                  style="
+                    margin-top: 0;
+                    padding: 3px 6px;
+                    font-size: 10px;
+                    background: #451a03;
+                    border-color: #d97706;
+                    color: #fde68a;
+                  "
+                  onclick="addAirport()"
+                >
+                  ＋ 空港を追加
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2. 空港ペア路線設定（拠点間路線） -->
+          <div
+            style="
+              font-size: 11px;
+              font-weight: bold;
+              color: #dddddd;
+              margin-bottom: 6px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <span>拠点間航空路線ペア</span>
+            <button
+              class="btn-config-action"
+              style="padding: 2px 6px; font-size: 10px; border-color: #d97706; color: #fde68a"
+              onclick="openMatrixModalB()"
+            >
+              ⚙️ 都市間OD詳細
+            </button>
+          </div>
+
+          <div class="table-container" style="margin-bottom: 8px">
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-left">出発</th>
+                  <th class="text-left">到着</th>
+                  <th>飛行(分)</th>
+                  <th>本数</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="airportRouteTableBody"></tbody>
+            </table>
+          </div>
+
+          <button
+            class="btn-add"
+            style="border-color: #d97706; background: #451a03; color: #fde68a; margin-top: 0"
+            onclick="addAirportRouteRow()"
+          >
+            ＋ 路線ペアを追加
+          </button>
+        </div>
+      </div>
+
+      <!-- ③ アナリティクス＆結果表示 -->
+      <div class="card" id="sec-result">
+        <div class="card-header">③ 計算結果＆分析</div>
+        <div class="card-scroll-body">
+          <!-- 1. 任意2都市選択プレビュー -->
+          <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px">
+            1. 区間ピンポイント分析
+          </div>
+          <div class="grid-2" style="margin-bottom: 10px">
+            <div class="input-group">
+              <span class="input-label">起点都市</span>
+              <select id="selectOrig" onchange="updatePairAnalysis()"></select>
+            </div>
+            <div class="input-group">
+              <span class="input-label">終点都市</span>
+              <select id="selectDest" onchange="updatePairAnalysis()"></select>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-title">総需要量 M<sub>total</sub></div>
+              <div class="summary-value val-blue" id="pairMtotal">--</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
+              <div class="summary-value val-purple" id="pairTeff">--</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 10px">
+            <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600">
+              機関別市場シェア (%)
+            </div>
+            <div class="share-bar-container" id="pairShareBar"></div>
+          </div>
+
+          <div class="table-container" style="margin-bottom: 16px">
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-left">モード</th>
+                  <th class="text-right">総合時間 T<sub>k</sub></th>
+                  <th class="text-right">需要量 M<sub>k</sub></th>
+                  <th class="text-right">シェア</th>
+                </tr>
+              </thead>
+              <tbody id="pairTableBody"></tbody>
+            </table>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
+
+          <!-- 2. 全都市間需要マトリクス (OD表) -->
+          <div class="card-header" style="margin-bottom: 6px">
+            <span>2. 都市間需要マトリクス (OD表)</span>
+          </div>
+          <div style="font-size: 10px; color: #999; margin-bottom: 6px">
+            集計対象モードを選択（タップで表示トグル切り替え）
+          </div>
+          <div id="odFilterContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px"></div>
+
+          <div class="table-container" style="margin-bottom: 16px">
+            <table id="odMatrixTable"></table>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
+
+          <!-- 3. 通過需要（断面交通量）の積み上げ面グラフ -->
+          <div class="card-header" style="margin-bottom: 4px">
+            <span>3. 区間別通過需要（断面交通量）</span>
+          </div>
+          <div style="font-size: 10px; color: #999; margin-bottom: 6px">
+            モードA（路線型）の区間ごとの通過需要を積み上げて表示（タップで表示トグル切り替え）
+          </div>
+
+          <div class="chart-container">
+            <canvas id="crossSectionCanvas"></canvas>
+          </div>
+          <div
+            id="chartLegend"
+            style="
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 10px;
+              margin-top: 10px;
+              font-size: 11px;
+            "
+          ></div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0" />
+
+          <!-- 4. デバッグパネル開閉トグル ＆ リセットボタン -->
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px">
+            <button class="btn-reset" style="padding: 6px 10px; font-size: 11px" onclick="resetDefaults()">
+              ↺ デフォルトにリセット
+            </button>
+            <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
+          </div>
+
+          <!-- 5. デバッグ設定 ＆ 内部計算ログ -->
+          <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818">
+            <div class="card-header" style="color: #60a5fa; margin-bottom: 6px">モデル定数のリアルタイム調整</div>
+            <div class="grid-4" style="margin-bottom: 8px">
+              <div class="input-group">
+                <span class="input-label">定数 K</span
+                ><input type="number" id="paramK" step="0.001" value="0.040" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">規模 α</span
+                ><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">抵抗 γ</span
+                ><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">感度 λ</span
+                ><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="onDataChange()" />
+              </div>
+            </div>
+            <div class="grid-5">
+              <div class="input-group">
+                <span class="input-label">飽和時間 T_min (分)</span
+                ><input type="number" id="paramTmin" step="1" value="0" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">短距離閾値 (分)</span
+                ><input type="number" id="paramShortThreshold" step="1" value="60" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">短距離係数</span
+                ><input type="number" id="paramShortCoeff" step="0.005" value="0.08" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">減衰開始時間 T_start (分)</span
+                ><input type="number" id="paramTstart" step="5" value="120" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">減衰パワー p</span
+                ><input type="number" id="paramP" step="0.1" value="1.0" onchange="onDataChange()" />
+              </div>
+            </div>
+
+            <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px">
+              ピンポイント区間の内部計算ログ
+            </div>
+            <div
+              id="pairDebugInfo"
+              style="
+                padding: 8px;
+                background: #111;
+                border: 1px solid #333;
+                border-radius: 6px;
+                font-size: 10px;
+                color: #aaa;
+                font-family: monospace;
+                white-space: pre-wrap;
+                word-break: break-all;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /.main-grid-pc -->
+
+    <!-- OD詳細設定ポップアップモーダル -->
+    <div id="matrixModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div style="font-weight: bold; color: #60a5fa; font-size: 14px" id="modalTitle">⚙️ OD詳細マトリクス設定</div>
+          <button class="btn-del" onclick="closeMatrixModal()">✕ 閉じる</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size: 11px; color: #aaa; margin-bottom: 10px">
+            ・<b style="color: #60a5fa">右上半分</b>：区間本数 (本/h) ｜ ・<b style="color: #a78bfa">左下半分</b
+            >：所要時間 (分)<br />
+            ・緑背景のセルは<b style="color: #6ee7b7">上書き済み</b
+            >です。空欄にして確定すると自動計算（簡易設定）へ復帰します。
+          </div>
+
+          <div class="table-container" style="flex: 1; max-height: none; overflow-y: auto">
+            <table id="matrixModalTable"></table>
+          </div>
+
+          <div style="margin-top: 12px; background: #181818; padding: 10px; border-radius: 8px; border: 1px solid #333">
+            <div style="font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 4px">
+              📋 Excelからのコピペ（TSV一括流し込み）
+            </div>
+            <textarea
+              id="pasteTextarea"
+              rows="2"
+              placeholder="Excelでコピーした数表（または数値のみ）をここにCtrl+Vで貼り付け、下の「一括反映」を押してください..."
+              style="
+                width: 100%;
+                background: #222;
+                border: 1px solid #444;
+                color: #fff;
+                font-size: 11px;
+                padding: 6px;
+                border-radius: 4px;
+                font-family: monospace;
+              "
+            ></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 6px">
+              <button class="btn-config-action" style="padding: 6px 12px" onclick="applyPastedTSV()">
+                📥 クリップボード内容を一括反映
+              </button>
+              <button
+                class="btn-config-action"
+                style="padding: 6px 12px; border-color: #059669; color: #6ee7b7"
+                onclick="copyMatrixToClipboard()"
+              >
+                📋 都市名付きでExcel用にコピー
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px">
+            <button
+              class="btn-reset"
+              style="padding: 6px 12px; font-size: 11px; border-color: #d97706; color: #fde68a"
+              onclick="resetMatrixModalOverrides()"
+            >
+              ↺ 自動計算値にリセット
+            </button>
+            <button class="btn-reset" style="padding: 6px 12px" onclick="closeMatrixModal()">キャンセル</button>
+            <button
+              class="btn-config-action"
+              style="padding: 6px 14px; background: #1d4ed8; color: #fff; border: none"
+              onclick="applyAndCalculateMatrix()"
+            >
+              確定
+            </button>
+            <button class="btn-calc-sticky" onclick="saveMatrixModal()">✓ 確定して閉じる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "traffic_sim_ver3_data";
+
+      const defaultCities = [
+        { name: "東京", p: 100, accessAir: 60 },
+        { name: "新横浜", p: 60, accessAir: 60 },
+        { name: "名古屋", p: 70, accessAir: 65 },
+        { name: "新大阪", p: 80, accessAir: 55 },
+        { name: "博多", p: 70, accessAir: 50 },
+      ];
+
+      const defaultModeA = [
+        {
+          name: "のぞみ/みずほ",
+          enabled: true,
+          accessTime: 10,
+          useShortPenalty: true,
+          color: "#3b82f6",
+          stations: [
+            { cityName: "東京", travel: 0 },
+            { cityName: "新横浜", travel: 18 },
+            { cityName: "名古屋", travel: 99 },
+            { cityName: "新大阪", travel: 150 },
+            { cityName: "博多", travel: 297 },
+          ],
+          segmentFreqs: [
+            { from: "東京", to: "新横浜", freq: 6.5 },
+            { from: "新横浜", to: "名古屋", freq: 6.5 },
+            { from: "名古屋", to: "新大阪", freq: 6.5 },
+            { from: "新大阪", to: "博多", freq: 3 },
+          ],
+          overrideTravel: {},
+          overrideFreq: {},
+        },
+        {
+          name: "ひかり/さくら",
+          enabled: true,
+          accessTime: 10,
+          useShortPenalty: true,
+          color: "#06b6d4",
+          stations: [
+            { cityName: "東京", travel: 0 },
+            { cityName: "新横浜", travel: 18 },
+            { cityName: "名古屋", travel: 118 },
+            { cityName: "新大阪", travel: 174 },
+            { cityName: "博多", travel: 337 },
+          ],
+          segmentFreqs: [
+            { from: "東京", to: "新横浜", freq: 2 },
+            { from: "新横浜", to: "名古屋", freq: 2 },
+            { from: "名古屋", to: "新大阪", freq: 1 },
+            { from: "新大阪", to: "博多", freq: 1 },
+          ],
+          overrideTravel: {},
+          overrideFreq: {},
+        },
+        {
+          name: "こだま",
+          enabled: true,
+          accessTime: 10,
+          useShortPenalty: true,
+          color: "#10b981",
+          stations: [
+            { cityName: "東京", travel: 0 },
+            { cityName: "新横浜", travel: 18 },
+            { cityName: "名古屋", travel: 160 },
+            { cityName: "新大阪", travel: 234 },
+            { cityName: "博多", travel: 490 },
+          ],
+          segmentFreqs: [
+            { from: "東京", to: "新横浜", freq: 2 },
+            { from: "新横浜", to: "名古屋", freq: 2 },
+            { from: "名古屋", to: "新大阪", freq: 2 },
+            { from: "新大阪", to: "博多", freq: 1 },
+          ],
+          overrideTravel: {},
+          overrideFreq: {},
+        },
+        {
+          name: "リニア",
+          enabled: false,
+          accessTime: 20,
+          useShortPenalty: true,
+          color: "#ec4899",
+          stations: [
+            { cityName: "東京", travel: 0 },
+            { cityName: "名古屋", travel: 40 },
+            { cityName: "新大阪", travel: 67 },
+            { cityName: "博多", travel: 230 },
+          ],
+          segmentFreqs: [
+            { from: "東京", to: "新横浜", freq: 5 },
+            { from: "新横浜", to: "名古屋", freq: 5 },
+            { from: "名古屋", to: "新大阪", freq: 5 },
+            { from: "新大阪", to: "博多", freq: 3 },
+          ],
+          overrideTravel: {},
+          overrideFreq: {},
+        },
+        {
+          name: "在来線",
+          enabled: true,
+          accessTime: 0,
+          useShortPenalty: false,
+          color: "#8b5cf6",
+          stations: [
+            { cityName: "東京", travel: 0 },
+            { cityName: "新横浜", travel: 26 },
+            { cityName: "名古屋", travel: 370 },
+            { cityName: "新大阪", travel: 475 },
+            { cityName: "博多", travel: null },
+          ],
+          segmentFreqs: [
+            { from: "東京", to: "新横浜", freq: 6 },
+            { from: "新横浜", to: "名古屋", freq: 2 },
+            { from: "名古屋", to: "新大阪", freq: 2 },
+            { from: "新大阪", to: "博多", freq: 0 },
+          ],
+          overrideTravel: {},
+          overrideFreq: {},
+        },
+      ];
+
+      // 【新規追加】デフォルト空港マスター
+      const defaultAirports = [{ name: "羽田" }, { name: "伊丹" }, { name: "関西" }, { name: "福岡" }];
+
+      // 【新規追加】都市〜空港アクセス時間(分) [cityName][airportName]
+      const defaultAirportAccess = {
+        東京: { 羽田: 30, 伊丹: null, 関西: null, 福岡: null },
+        新横浜: { 羽田: 45, 伊丹: null, 関西: null, 福岡: null },
+        名古屋: { 羽田: null, 伊丹: null, 関西: null, 福岡: null },
+        新大阪: { 羽田: null, 伊丹: 25, 関西: 50, 福岡: null },
+        博多: { 羽田: null, 伊丹: null, 関西: null, 福岡: 15 },
+      };
+
+      // 【新規追加】空港ペア設定（拠点間路線）
+      const defaultAirportRoutes = [
+        { origAirport: "羽田", destAirport: "伊丹", travel: 60, freq: 2.0, color: "#f59e0b", enabled: true },
+        { origAirport: "羽田", destAirport: "福岡", travel: 110, freq: 3.5, color: "#f59e0b", enabled: true },
+        { origAirport: "伊丹", destAirport: "福岡", travel: 75, freq: 1.0, color: "#f59e0b", enabled: true },
+      ];
+
+      // 旧直行固定データをクリアし、空港マスター（airportRoutes + airportAccess）からの動的計算に一本化
+      const defaultModeB = [];
+
+      let cities = JSON.parse(JSON.stringify(defaultCities));
+      let modeA = JSON.parse(JSON.stringify(defaultModeA));
+      let modeB = JSON.parse(JSON.stringify(defaultModeB));
+      let airports = JSON.parse(JSON.stringify(defaultAirports));
+      let airportAccess = JSON.parse(JSON.stringify(defaultAirportAccess));
+      let airportRoutes = JSON.parse(JSON.stringify(defaultAirportRoutes));
+
+      let odResultsMatrix = {};
+      let allModeNames = [];
+
+      let disabledChartModes = new Set();
+      let isChartTotalMode = true;
+
+      // --- モーダルダイアログ編集中の状態 ---
+      let activeModalType = "A"; // 'A' または 'B'
+      let activeModalModeIdx = null;
+      let modalMatrixData = {};
+
+      // --- Undo / Redo 状態管理 ---
+      const MAX_HISTORY = 30;
+      let historyStack = [];
+      let historyIndex = -1;
+      let isUndoingRedoing = false;
+
+      function pushHistory() {
+        if (isUndoingRedoing) return;
+
+        const snapshot = JSON.stringify({
+          simName: document.getElementById("simNameInput") ? document.getElementById("simNameInput").value : "",
           params: {
             K: Number(document.getElementById("paramK").value),
             alpha: Number(document.getElementById("paramAlpha").value),
@@ -773,666 +1250,1693 @@
             lambda: Number(document.getElementById("paramLambda").value),
             Tmin: Number(document.getElementById("paramTmin").value),
             shortThreshold: Number(document.getElementById("paramShortThreshold").value),
-            shortCoeff: Number(document.getElementById("paramShortCoeff").value)
+            shortCoeff: Number(document.getElementById("paramShortCoeff").value),
+            Tstart: Number(document.getElementById("paramTstart").value),
+            paramP: Number(document.getElementById("paramP").value),
           },
           cities: cities,
           modeA: modeA,
           modeB: modeB,
-          selectOrig: document.getElementById("selectOrig") ? document.getElementById("selectOrig").value : "",
-          selectDest: document.getElementById("selectDest") ? document.getElementById("selectDest").value : ""
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {
-        console.warn("localStorage への保存に失敗しました:", e);
-      }
-    }
-
-    // --- ローカルストレージ自動復元 ---
-    function loadFromLocalStorage() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return false;
-
-        const state = JSON.parse(saved);
-
-        if (state.simName && document.getElementById("simNameInput")) {
-          document.getElementById("simNameInput").value = state.simName;
-        }
-
-        if (state.params) {
-          if (state.params.K !== undefined) document.getElementById("paramK").value = state.params.K;
-          if (state.params.alpha !== undefined) document.getElementById("paramAlpha").value = state.params.alpha;
-          if (state.params.gamma !== undefined) document.getElementById("paramGamma").value = state.params.gamma;
-          if (state.params.lambda !== undefined) document.getElementById("paramLambda").value = state.params.lambda;
-          if (state.params.Tmin !== undefined) document.getElementById("paramTmin").value = state.params.Tmin;
-          if (state.params.shortThreshold !== undefined) document.getElementById("paramShortThreshold").value = state.params.shortThreshold;
-          if (state.params.shortCoeff !== undefined) document.getElementById("paramShortCoeff").value = state.params.shortCoeff;
-        }
-
-        if (state.cities && Array.isArray(state.cities)) cities = state.cities;
-        if (state.modeA && Array.isArray(state.modeA)) modeA = state.modeA;
-        if (state.modeB && Array.isArray(state.modeB)) modeB = state.modeB;
-
-        return state;
-      } catch (e) {
-        console.warn("localStorage からの読み込みに失敗しました:", e);
-        return false;
-      }
-    }
-
-    // --- 動的高さ対応のスクロール共通関数 ---
-    function scrollToTarget(targetElem) {
-      if (!targetElem) return;
-      
-      const stickyBar = document.querySelector(".sticky-action-bar");
-      const toolbarHeight = stickyBar ? stickyBar.offsetHeight : 0;
-      
-      const elementPosition = targetElem.getBoundingClientRect().top + window.pageYOffset;
-      const offsetPosition = elementPosition - toolbarHeight - 8;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth"
-      });
-    }
-
-    // --- 動的ナビゲーションボタンの描画 ---
-    function renderDynamicNavTabs() {
-      const container = document.getElementById("dynamicNavTabs");
-      if (!container) return;
-
-      let html = '';
-
-      html += `<button class="btn-nav-jump" style="border-color: #4b5563; color: #9ca3af;" onclick="scrollToTarget(document.getElementById('sec-city'))">① 都市</button>`;
-
-      modeA.forEach((mA, idx) => {
-        if (mA.enabled) {
-          const modeColor = mA.color || "#3b82f6";
-          html += `<button class="btn-nav-jump" style="border-color: ${modeColor}; color: ${modeColor};" onclick="scrollToModeA(${idx})">${mA.name}</button>`;
-        }
-      });
-
-      const hasEnabledModeB = modeB.some(mB => mB.enabled !== false && mB.freq > 0);
-      if (hasEnabledModeB) {
-        html += `<button class="btn-nav-jump" style="border-color: #f59e0b; color: #f59e0b;" onclick="scrollToTarget(document.getElementById('sec-modeb'))">航空機</button>`;
-      }
-
-      html += `<button class="btn-nav-jump" style="border-color: #2563eb; color: #60a5fa; background: #1e293b;" onclick="scrollToTarget(document.getElementById('sec-result'))">③ 結果</button>`;
-
-      container.innerHTML = html;
-    }
-
-    function scrollToModeA(index) {
-      const modeItems = document.querySelectorAll("#modeAContainer .mode-item");
-      if (modeItems[index]) {
-        scrollToTarget(modeItems[index]);
-      }
-    }
-
-    function renderCitiesTable() {
-      const tbody = document.getElementById("cityTableBody");
-      tbody.innerHTML = "";
-      cities.forEach((c, idx) => {
-        const tr = document.createElement("tr");
-        const upDisabled = (idx === 0) ? "disabled style='opacity:0.3; cursor:default;'" : "";
-        const downDisabled = (idx === cities.length - 1) ? "disabled style='opacity:0.3; cursor:default;'" : "";
-
-        tr.innerHTML = `
-          <td><input type="text" class="text-left" value="${c.name}" onchange="cities[${idx}].name=this.value; syncCityNames();"></td>
-          <td><input type="number" value="${c.p}" onchange="cities[${idx}].p=Number(this.value);"></td>
-          <td><input type="number" value="${c.accessAir}" onchange="cities[${idx}].accessAir=Number(this.value);"></td>
-          <td style="white-space: nowrap;">
-            <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:2px;" onclick="moveCity(${idx}, -1)" ${upDisabled}>▲</button>
-            <button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:4px;" onclick="moveCity(${idx}, 1)" ${downDisabled}>▼</button>
-            <button class="btn-del" onclick="deleteCity(${idx})">削除</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      syncCitySelects();
-    }
-
-    function moveCity(idx, direction) {
-      const targetIdx = idx + direction;
-      if (targetIdx < 0 || targetIdx >= cities.length) return;
-
-      const temp = cities[idx];
-      cities[idx] = cities[targetIdx];
-      cities[targetIdx] = temp;
-
-      renderCitiesTable();
-    }
-
-    function confirmCityOrder() {
-      renderModeA();
-    }
-
-    function renderModeA() {
-      const container = document.getElementById("modeAContainer");
-      container.innerHTML = "";
-      
-      const currentSegments = [];
-      for (let i = 0; i < cities.length - 1; i++) {
-        currentSegments.push({ from: cities[i].name, to: cities[i+1].name });
-      }
-
-      modeA.forEach((mA, idx) => {
-        const div = document.createElement("div");
-        div.className = "mode-item";
-        
-        let stationRowsHtml = "";
-        cities.forEach((c) => {
-          const st = mA.stations.find(s => s.cityName === c.name) || { travel: null };
-          const travelVal = (st.travel !== null && st.travel !== undefined) ? st.travel : "-";
-          
-          stationRowsHtml += `
-            <tr>
-              <td class="text-left" style="color:#aaa;">${c.name}</td>
-              <td><input type="text" value="${travelVal}" style="width:60px;" onchange="updateModeAStation(${idx}, '${c.name}', this.value)"></td>
-            </tr>
-          `;
+          airports: airports, // ★ 空港マスター同期
+          airportAccess: airportAccess, // ★ アクセス時間同期
+          airportRoutes: airportRoutes, // ★ 航空路線ペア同期
         });
 
-        const newSegmentFreqs = [];
-        let segmentRowsHtml = "";
+        historyStack = historyStack.slice(0, historyIndex + 1);
+        historyStack.push(snapshot);
 
-        currentSegments.forEach((seg) => {
-          let sf = (mA.segmentFreqs || []).find(s => 
-            (s.from === seg.from && s.to === seg.to) || (s.from === seg.to && s.to === seg.from)
-          );
-          
-          if (!sf) {
-            sf = { from: seg.from, to: seg.to, freq: 0 };
-          } else {
-            sf.from = seg.from;
-            sf.to = seg.to;
-          }
-          
-          newSegmentFreqs.push(sf);
+        if (historyStack.length > MAX_HISTORY) {
+          historyStack.shift();
+        } else {
+          historyIndex++;
+        }
 
-          segmentRowsHtml += `
-            <tr>
-              <td class="text-left" style="color:#aaa;">${seg.from}─${seg.to}</td>
-              <td><input type="number" step="0.5" value="${sf.freq}" style="width:60px;" onchange="updateModeASegmentFreq(${idx}, '${seg.from}', '${seg.to}', this.value)"></td>
-            </tr>
-          `;
-        });
-
-        mA.segmentFreqs = newSegmentFreqs;
-
-        div.innerHTML = `
-          <div class="mode-item-top">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span class="color-dot" style="background:${mA.color}"></span>
-              <input type="text" value="${mA.name}" style="background:transparent; border:none; border-bottom:1px dashed #666; color:#fff; font-weight:bold; width:80px;" onchange="modeA[${idx}].name=this.value;">
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div style="display:flex; align-items:center; gap:3px;">
-                <span style="font-size:10px; color:#aaa;">アクセス定数:</span>
-                <input type="number" value="${mA.accessTime || 0}" style="width:42px; padding:2px 4px;" onchange="modeA[${idx}].accessTime=Number(this.value);">
-                <span style="font-size:10px; color:#aaa;">分</span>
-              </div>
-              <label style="font-size:10px; color:#aaa; display:flex; align-items:center; gap:2px; cursor:pointer;">
-                <input type="checkbox" ${mA.useShortPenalty !== false ? 'checked' : ''} onchange="modeA[${idx}].useShortPenalty=this.checked;">
-                短距離補正
-              </label>
-              <label class="switch-wrap">
-                <input type="checkbox" ${mA.enabled ? 'checked' : ''} onchange="modeA[${idx}].enabled=this.checked; renderDynamicNavTabs();">
-                <span class="switch-slider"></span>
-              </label>
-
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <div>
-              <div style="font-size:10px; color:#888; margin-bottom:4px; font-weight:bold;">始発所要時間(分)</div>
-              <div class="table-container">
-                <table>
-                  <thead><tr><th class="text-left">都市</th><th>時間</th></tr></thead>
-                  <tbody>${stationRowsHtml}</tbody>
-                </table>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px; color:#888; margin-bottom:4px; font-weight:bold;">区間本数(本/h)</div>
-              <div class="table-container">
-                <table>
-                  <thead><tr><th class="text-left">区間</th><th>本数</th></tr></thead>
-                  <tbody>${segmentRowsHtml}</tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function renderModeBTable() {
-      const tbody = document.getElementById("modeBTableBody");
-      tbody.innerHTML = "";
-      modeB.forEach((mB, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="text" class="text-left" value="${mB.orig}" onchange="modeB[${idx}].orig=this.value;"></td>
-          <td><input type="text" class="text-left" value="${mB.dest}" onchange="modeB[${idx}].dest=this.value;"></td>
-          <td><input type="number" value="${mB.travel}" onchange="modeB[${idx}].travel=Number(this.value);"></td>
-          <td><input type="number" step="0.5" value="${mB.freq}" onchange="modeB[${idx}].freq=Number(this.value);"></td>
-          <td><button class="btn-del" onclick="deleteModeB(${idx})">削除</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function updateModeAStation(mAIdx, cityName, val) {
-      let st = modeA[mAIdx].stations.find(s => s.cityName === cityName);
-      if (!st) {
-        st = { cityName: cityName, travel: null };
-        modeA[mAIdx].stations.push(st);
+        updateUndoRedoButtons();
       }
-      st.travel = (val === "-" || val.trim() === "") ? null : Number(val);
-    }
 
-    function updateModeASegmentFreq(mAIdx, fromCity, toCity, val) {
-      if (!modeA[mAIdx].segmentFreqs) modeA[mAIdx].segmentFreqs = [];
-      let sf = modeA[mAIdx].segmentFreqs.find(s => (s.from === fromCity && s.to === toCity) || (s.from === toCity && s.to === fromCity));
-      if (!sf) {
-        sf = { from: fromCity, to: toCity, freq: 0 };
-        modeA[mAIdx].segmentFreqs.push(sf);
+      function onDataChange() {
+        if (isUndoingRedoing) return;
+        pushHistory();
+        saveToLocalStorage();
       }
-      sf.freq = Number(val);
-    }
 
-    function getPathMinFreq(mA, origIdx, destIdx) {
-      if (!mA.segmentFreqs || mA.segmentFreqs.length === 0) return 0;
-      
-      const minIdx = Math.min(origIdx, destIdx);
-      const maxIdx = Math.max(origIdx, destIdx);
-      
-      if (minIdx === maxIdx) return 0;
-
-      let minFreq = Infinity;
-      
-      for (let k = minIdx; k < maxIdx; k++) {
-        const c1 = cities[k].name;
-        const c2 = cities[k+1].name;
-        
-        const sf = mA.segmentFreqs.find(s => 
-          (s.from === c1 && s.to === c2) || (s.from === c2 && s.to === c1)
-        );
-        
-        const f = sf ? Number(sf.freq) : 0;
-        if (f < minFreq) {
-          minFreq = f;
+      function undo() {
+        if (historyIndex > 0) {
+          historyIndex--;
+          applyHistoryState(historyStack[historyIndex]);
         }
       }
-      
-      return (minFreq === Infinity || isNaN(minFreq)) ? 0 : minFreq;
-    }
 
-    function addCity() {
-      const newName = "都市" + (cities.length + 1);
-      cities.push({ name: newName, p: 50, accessAir: 90 });
-      renderCitiesTable();
-      renderModeA();
-    }
-
-    function deleteCity(idx) {
-      if (cities.length <= 2) { alert("都市は最低2つ必要です。"); return; }
-      cities.splice(idx, 1);
-      renderCitiesTable();
-      renderModeA();
-    }
-
-    function addModeBRow() {
-      if (modeB.length > 0) {
-        const lastRow = modeB[modeB.length - 1];
-        modeB.push({
-          orig: lastRow.orig,
-          dest: lastRow.dest,
-          travel: lastRow.travel,
-          freq: lastRow.freq,
-          color: lastRow.color || "#f59e0b",
-          enabled: true
-        });
-      } else {
-        const c1 = cities[0] ? cities[0].name : "東京";
-        const c2 = cities[cities.length - 1] ? cities[cities.length - 1].name : "新大阪";
-        modeB.push({ orig: c1, dest: c2, travel: 70, freq: 2.0, color: "#f59e0b", enabled: true });
+      function redo() {
+        if (historyIndex < historyStack.length - 1) {
+          historyIndex++;
+          applyHistoryState(historyStack[historyIndex]);
+        }
       }
-      renderModeBTable();
-    }
 
-    function deleteModeB(idx) {
-      modeB.splice(idx, 1);
-      renderModeBTable();
-    }
+      function applyHistoryState(jsonStr) {
+        if (!jsonStr) return;
 
-    function syncCityNames() {
-      syncCitySelects();
-      renderModeA();
-    }
+        isUndoingRedoing = true;
 
-    function syncCitySelects() {
-      const sOrig = document.getElementById("selectOrig");
-      const sDest = document.getElementById("selectDest");
-      const origVal = sOrig.value || (cities[0] ? cities[0].name : "");
-      const destVal = sDest.value || (cities[2] ? cities[2].name : (cities[1] ? cities[1].name : ""));
-
-      sOrig.innerHTML = "";
-      sDest.innerHTML = "";
-      cities.forEach(c => {
-        sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-        sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-      });
-
-      sOrig.value = origVal;
-      sDest.value = destVal;
-    }
-
-    function toggleDebug() {
-      const isHidden = document.getElementById("debugPanel").classList.toggle("hidden");
-      if (!isHidden) {
-        document.getElementById("debugPanel").scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-
-    function exportConfig() {
-      const simName = document.getElementById("simNameInput").value.trim() || "無題シミュレーション";
-      
-      const configData = {
-        version: "3.0",
-        simName: simName,
-        timestamp: new Date().toISOString(),
-        params: {
-          K: Number(document.getElementById("paramK").value),
-          alpha: Number(document.getElementById("paramAlpha").value),
-          gamma: Number(document.getElementById("paramGamma").value),
-          lambda: Number(document.getElementById("paramLambda").value),
-          Tmin: Number(document.getElementById("paramTmin").value),
-          shortThreshold: Number(document.getElementById("paramShortThreshold").value),
-          shortCoeff: Number(document.getElementById("paramShortCoeff").value)
-        },
-        cities: cities,
-        modeA: modeA,
-        modeB: modeB
-      };
-
-      let jsonStr = JSON.stringify(configData, null, 2);
-      jsonStr = jsonStr.replace(/\{\n\s+("name"|"orig"|"from"|"cityName")[\s\S]*?\n\s+\}/g, (match) => {
-        return match.replace(/\n\s*/g, ' ');
-      });
-
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-      
-      const safeSimName = simName.replace(/[\\/:*?"<>|]/g, '_');
-      const fileName = `traffic_config_${safeSimName}_${dateStr}.json`;
-
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function importConfig(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
         try {
-          const config = JSON.parse(e.target.result);
+          const state = JSON.parse(jsonStr);
 
-          if (config.simName) {
-            document.getElementById("simNameInput").value = config.simName;
-          }
-
-          if (config.params) {
-            if (config.params.K !== undefined) document.getElementById("paramK").value = config.params.K;
-            if (config.params.alpha !== undefined) document.getElementById("paramAlpha").value = config.params.alpha;
-            if (config.params.gamma !== undefined) document.getElementById("paramGamma").value = config.params.gamma;
-            if (config.params.lambda !== undefined) document.getElementById("paramLambda").value = config.params.lambda;
-            if (config.params.Tmin !== undefined) document.getElementById("paramTmin").value = config.params.Tmin;
-            if (config.params.shortThreshold !== undefined) document.getElementById("paramShortThreshold").value = config.params.shortThreshold;
-            if (config.params.shortCoeff !== undefined) document.getElementById("paramShortCoeff").value = config.params.shortCoeff;
+          if (state.simName && document.getElementById("simNameInput")) {
+            document.getElementById("simNameInput").value = state.simName;
           }
 
-          if (config.cities && Array.isArray(config.cities)) {
-            cities = config.cities;
+          if (state.params) {
+            if (state.params.K !== undefined) document.getElementById("paramK").value = state.params.K;
+            if (state.params.alpha !== undefined) document.getElementById("paramAlpha").value = state.params.alpha;
+            if (state.params.gamma !== undefined) document.getElementById("paramGamma").value = state.params.gamma;
+            if (state.params.lambda !== undefined) document.getElementById("paramLambda").value = state.params.lambda;
+            if (state.params.Tmin !== undefined) document.getElementById("paramTmin").value = state.params.Tmin;
+            if (state.params.shortThreshold !== undefined)
+              document.getElementById("paramShortThreshold").value = state.params.shortThreshold;
+            if (state.params.shortCoeff !== undefined)
+              document.getElementById("paramShortCoeff").value = state.params.shortCoeff;
+            if (state.params.Tstart !== undefined) document.getElementById("paramTstart").value = state.params.Tstart;
+            if (state.params.paramP !== undefined) document.getElementById("paramP").value = state.params.paramP;
           }
-          if (config.modeA && Array.isArray(config.modeA)) {
-            modeA = config.modeA;
-          }
-          if (config.modeB && Array.isArray(config.modeB)) {
-            modeB = config.modeB;
-          }
+
+          if (state.cities) cities = JSON.parse(JSON.stringify(state.cities));
+          if (state.modeA) modeA = JSON.parse(JSON.stringify(state.modeA));
+          if (state.modeB) modeB = JSON.parse(JSON.stringify(state.modeB));
+          if (state.airports) airports = JSON.parse(JSON.stringify(state.airports));
+          if (state.airportAccess) airportAccess = JSON.parse(JSON.stringify(state.airportAccess));
+          if (state.airportRoutes) airportRoutes = JSON.parse(JSON.stringify(state.airportRoutes));
 
           renderCitiesTable();
           renderModeA();
-          renderModeBTable();
+          if (typeof renderAirportTable === "function") renderAirportTable();
+          if (typeof renderAirportRouteTable === "function") renderAirportRouteTable();
+
           calculate();
           renderDynamicNavTabs();
 
-          alert(`設定「${config.simName || file.name}」を正常に読み込みました。`);
-        } catch (err) {
-          alert("設定ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
-          console.error(err);
+          saveToLocalStorage();
+        } catch (e) {
+          console.error("Undo/Redo 適用エラー:", e);
+        } finally {
+          isUndoingRedoing = false;
+          updateUndoRedoButtons();
         }
-        event.target.value = "";
-      };
-      reader.readAsText(file);
-    }
-
-    // --- デフォルトに戻す ---
-    function resetDefaults() {
-      localStorage.removeItem(STORAGE_KEY);
-
-      document.getElementById("paramK").value = 0.040;
-      document.getElementById("paramAlpha").value = 0.90;
-      document.getElementById("paramGamma").value = 0.90;
-      document.getElementById("paramLambda").value = 0.03;
-      document.getElementById("paramTmin").value = 0;
-      document.getElementById("paramShortThreshold").value = 60;
-      document.getElementById("paramShortCoeff").value = 0.020;
-      document.getElementById("paramTstart").value = 120;
-      document.getElementById("paramP").value = 1.0;
-      document.getElementById("simNameInput").value = "東海道・山陽新幹線";
-
-      cities = JSON.parse(JSON.stringify(defaultCities));
-      modeA = JSON.parse(JSON.stringify(defaultModeA));
-      modeB = JSON.parse(JSON.stringify(defaultModeB));
-
-      const debugPanel = document.getElementById("debugPanel");
-      if (debugPanel && !debugPanel.classList.contains("hidden")) {
-        debugPanel.classList.add("hidden");
       }
 
-      renderCitiesTable();
-      renderModeA();
-      renderModeBTable();
-      calculate();
-      renderDynamicNavTabs();
-    }
-    
-    // --- 需要計算コアロジック ---
-    function calculate() {
-      const K = Number(document.getElementById("paramK").value) || 0.040;
-      const alpha = Number(document.getElementById("paramAlpha").value) || 0.90;
-      const gamma = Number(document.getElementById("paramGamma").value) || 0.90;
-      const lambda = Number(document.getElementById("paramLambda").value) || 0.03;
+      function updateUndoRedoButtons() {
+        const btnUndo = document.getElementById("btnUndo");
+        const btnRedo = document.getElementById("btnRedo");
 
-      const Tmin = Number(document.getElementById("paramTmin").value) || 0.1;
-      const shortThreshold = Number(document.getElementById("paramShortThreshold").value) || 45;
-      const shortCoeff = Number(document.getElementById("paramShortCoeff").value) || 0.200;
+        if (btnUndo) {
+          btnUndo.disabled = historyIndex <= 0;
+          btnUndo.style.opacity = historyIndex > 0 ? "1" : "0.5";
+          btnUndo.style.cursor = historyIndex > 0 ? "pointer" : "not-allowed";
+        }
+        if (btnRedo) {
+          btnRedo.disabled = historyIndex >= historyStack.length - 1;
+          btnRedo.style.opacity = historyIndex < historyStack.length - 1 ? "1" : "0.5";
+          btnRedo.style.cursor = historyIndex < historyStack.length - 1 ? "pointer" : "not-allowed";
+        }
+      }
 
-      // --- 距離的スケーリング用のパラメータ取得 ---
-      const TstartElem = document.getElementById("paramTstart");
-      const paramPElem = document.getElementById("paramP");
-      const Tstart = TstartElem ? (Number(TstartElem.value) || 120) : 120;
-      const paramP = paramPElem ? (Number(paramPElem.value) || 1.0) : 1.0;
+      function saveToLocalStorage() {
+        try {
+          const state = {
+            simName: document.getElementById("simNameInput")
+              ? document.getElementById("simNameInput").value
+              : "東海道・山陽新幹線",
+            params: {
+              K: Number(document.getElementById("paramK").value),
+              alpha: Number(document.getElementById("paramAlpha").value),
+              gamma: Number(document.getElementById("paramGamma").value),
+              lambda: Number(document.getElementById("paramLambda").value),
+              Tmin: Number(document.getElementById("paramTmin").value),
+              shortThreshold: Number(document.getElementById("paramShortThreshold").value),
+              shortCoeff: Number(document.getElementById("paramShortCoeff").value),
+              Tstart: Number(document.getElementById("paramTstart").value),
+              paramP: Number(document.getElementById("paramP").value),
+            },
+            cities: cities,
+            modeA: modeA,
+            modeB: modeB,
+            airports: airports,
+            airportAccess: airportAccess,
+            airportRoutes: airportRoutes,
+            selectOrig: document.getElementById("selectOrig") ? document.getElementById("selectOrig").value : "",
+            selectDest: document.getElementById("selectDest") ? document.getElementById("selectDest").value : "",
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.warn("localStorage への保存に失敗しました:", e);
+        }
+      }
 
-      odResultsMatrix = {};
+      function loadFromLocalStorage() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (!saved) return false;
 
-      for (let i = 0; i < cities.length; i++) {
-        const cOrig = cities[i];
-        odResultsMatrix[cOrig.name] = {};
+          const state = JSON.parse(saved);
 
-        for (let j = 0; j < cities.length; j++) {
-          const cDest = cities[j];
-
-          if (i === j) {
-            odResultsMatrix[cOrig.name][cDest.name] = { Teff: 0, Mtotal: 0, modes: [] };
-            continue;
+          if (state.simName && document.getElementById("simNameInput")) {
+            document.getElementById("simNameInput").value = state.simName;
           }
 
-          let availableModes = [];
+          if (state.params) {
+            if (state.params.K !== undefined) document.getElementById("paramK").value = state.params.K;
+            if (state.params.alpha !== undefined) document.getElementById("paramAlpha").value = state.params.alpha;
+            if (state.params.gamma !== undefined) document.getElementById("paramGamma").value = state.params.gamma;
+            if (state.params.lambda !== undefined) document.getElementById("paramLambda").value = state.params.lambda;
+            if (state.params.Tmin !== undefined) document.getElementById("paramTmin").value = state.params.Tmin;
+            if (state.params.shortThreshold !== undefined)
+              document.getElementById("paramShortThreshold").value = state.params.shortThreshold;
+            if (state.params.shortCoeff !== undefined)
+              document.getElementById("paramShortCoeff").value = state.params.shortCoeff;
+            if (state.params.Tstart !== undefined) document.getElementById("paramTstart").value = state.params.Tstart;
+            if (state.params.paramP !== undefined) document.getElementById("paramP").value = state.params.paramP;
+          }
 
-          // モードA（路線型）の探索
-          modeA.forEach(mA => {
-            if (!mA.enabled) return;
-            const stOrig = mA.stations.find(s => s.cityName === cOrig.name);
-            const stDest = mA.stations.find(s => s.cityName === cDest.name);
+          if (state.cities && Array.isArray(state.cities)) cities = state.cities;
+          if (state.modeA && Array.isArray(state.modeA)) modeA = state.modeA;
+          if (state.modeB && Array.isArray(state.modeB)) modeB = state.modeB;
+          if (state.airports && Array.isArray(state.airports)) airports = state.airports;
+          if (state.airportAccess) airportAccess = state.airportAccess;
+          if (state.airportRoutes && Array.isArray(state.airportRoutes)) airportRoutes = state.airportRoutes;
 
-            if (stOrig && stDest && stOrig.travel !== null && stDest.travel !== null) {
-              const minFreq = getPathMinFreq(mA, i, j);
-              if (minFreq > 0) {
-                const inVehicleTime = Math.abs(stDest.travel - stOrig.travel);
-                const waitTime = 60 / (2 * minFreq);
-                const accessTime = mA.accessTime || 0;
+          return state;
+        } catch (e) {
+          console.warn("localStorage からの読み込みに失敗しました:", e);
+          return false;
+        }
+      }
 
-                // Ver3.0通りの短距離ペナルティ計算
-                let shortPenalty = 0;
-                if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
-                  shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
+      function scrollToTarget(targetElem) {
+        if (!targetElem) return;
+        const stickyBar = document.querySelector(".sticky-action-bar");
+        const toolbarHeight = stickyBar ? stickyBar.offsetHeight : 0;
+        const elementPosition = targetElem.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - toolbarHeight - 8;
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+      }
+
+      function renderDynamicNavTabs() {
+        const container = document.getElementById("dynamicNavTabs");
+        const quickContainer = document.getElementById("modeAQuickNavTabs");
+
+        // --- 1. 上部追従バー用（①都市、モードA群、航空機、③結果） ---
+        let htmlFull =
+          '<button class="btn-nav-jump" style="border-color: #4b5563; color: #9ca3af;" onclick="scrollToTarget(document.getElementById(\'sec-city\'))">① 都市</button>';
+
+        // --- 2. モードAカード固定ヘッダー用（モードA群のみ） ---
+        let htmlModeAOnly = "";
+
+        modeA.forEach((mA, idx) => {
+          // トグルがオン/オフに関わらず全モードのボタンを生成
+          const isEnabled = mA.enabled !== false;
+          const modeColor = mA.color || "#3b82f6";
+
+          // トグルオフの場合はグレー系＋半透明で非表示状態を表現
+          const btnStyle = isEnabled
+            ? "border-color: " + modeColor + "; color: " + modeColor + ";"
+            : "border-color: #555555; color: #888888; opacity: 0.55; background: #1a1a1a;";
+
+          const btnHtml =
+            '<button class="btn-nav-jump" style="' +
+            btnStyle +
+            '" onclick="scrollToModeA(' +
+            idx +
+            ')">' +
+            mA.name +
+            "</button>";
+
+          htmlFull += btnHtml;
+          htmlModeAOnly += btnHtml;
+        });
+
+        const hasEnabledModeB =
+          typeof airportRoutes !== "undefined"
+            ? airportRoutes.some((r) => r.enabled !== false && r.freq > 0)
+            : modeB.some((mB) => mB.enabled !== false && mB.freq > 0);
+
+        if (hasEnabledModeB) {
+          htmlFull +=
+            '<button class="btn-nav-jump" style="border-color: #f59e0b; color: #f59e0b;" onclick="scrollToTarget(document.getElementById(\'sec-modeb\'))">航空機</button>';
+        }
+
+        htmlFull +=
+          '<button class="btn-nav-jump" style="border-color: #2563eb; color: #60a5fa; background: #1e293b;" onclick="scrollToTarget(document.getElementById(\'sec-result\'))">③ 結果</button>';
+
+        if (container) container.innerHTML = htmlFull;
+        if (quickContainer) quickContainer.innerHTML = htmlModeAOnly;
+      }
+
+      function scrollToModeA(index) {
+        const modeItems = document.querySelectorAll("#modeAContainer .mode-item");
+        if (!modeItems[index]) return;
+
+        const targetElem = modeItems[index];
+
+        // 1920px 以上の環境：モードAカード内（.card-scroll-body）のみを自動スクロール
+        if (window.innerWidth >= 1920) {
+          const scrollContainer = targetElem.closest(".card-scroll-body");
+          if (scrollContainer) {
+            const containerTop = scrollContainer.getBoundingClientRect().top;
+            const elemTop = targetElem.getBoundingClientRect().top;
+
+            // 固定ヘッダー直下からの位置を純粋に計算
+            const scrollOffset = elemTop - containerTop + scrollContainer.scrollTop - 4;
+
+            scrollContainer.scrollTo({ top: scrollOffset, behavior: "smooth" });
+          }
+        } else {
+          // 1920px 未満の環境：従来のページ全体スクロール
+          scrollToTarget(targetElem);
+        }
+      }
+
+      function renderCitiesTable() {
+        const tbody = document.getElementById("cityTableBody");
+        tbody.innerHTML = "";
+
+        cities.forEach((c, idx) => {
+          const tr = document.createElement("tr");
+          const upDisabled = idx === 0 ? "disabled style='opacity:0.3; cursor:default;'" : "";
+          const downDisabled = idx === cities.length - 1 ? "disabled style='opacity:0.3; cursor:default;'" : "";
+
+          tr.innerHTML =
+            '<td><input type="text" class="text-left" value="' +
+            c.name +
+            '" onchange="cities[' +
+            idx +
+            '].name=this.value; syncCityNames(); onDataChange();"></td>' +
+            '<td><input type="number" value="' +
+            c.p +
+            '" onchange="cities[' +
+            idx +
+            '].p=Number(this.value); onDataChange();"></td>' +
+            '<td style="white-space: nowrap;">' +
+            '<button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:2px;" onclick="moveCity(' +
+            idx +
+            ', -1)" ' +
+            upDisabled +
+            ">▲</button>" +
+            '<button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; margin-right:4px;" onclick="moveCity(' +
+            idx +
+            ', 1)" ' +
+            downDisabled +
+            ">▼</button>" +
+            '<button class="btn-del" onclick="deleteCity(' +
+            idx +
+            ')">削除</button>' +
+            "</td>";
+
+          tbody.appendChild(tr);
+        });
+
+        syncCitySelects();
+      }
+
+      function renderAirportTable() {
+        const table = document.getElementById("airportAccessTable");
+        if (!table) return;
+
+        // 親のコンテナ要素にスクロール用クラスを適用
+        if (table.parentElement && !table.parentElement.classList.contains("airport-scroll-container")) {
+          table.parentElement.classList.add("airport-scroll-container");
+        }
+
+        // 1行目: <thead> 内に列ヘッダー（空港名＋並び替えボタン）を出力
+        let headHtml = "<thead><tr><th class='text-left sticky-col'>都市 \\ 空港</th>";
+
+        airports.forEach((ap, aIdx) => {
+          const leftDisabled = aIdx === 0 ? "disabled style='opacity:0.3; cursor:default;'" : "";
+          const rightDisabled = aIdx === airports.length - 1 ? "disabled style='opacity:0.3; cursor:default;'" : "";
+
+          headHtml +=
+            "<th>" +
+            '<div style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:2px 4px;">' +
+            '<div style="display:flex; align-items:center; gap:2px;">' +
+            '<input type="text" value="' +
+            ap.name +
+            '" style="width:55px; text-align:center;" onchange="updateAirportName(' +
+            aIdx +
+            ', this.value)">' +
+            '<button class="btn-del" style="padding:1px 4px; font-size:9px;" onclick="deleteAirport(' +
+            aIdx +
+            ')">✕</button>' +
+            "</div>" +
+            '<div style="display:flex; gap:2px;">' +
+            '<button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; padding:1px 5px; font-size:9px;" onclick="moveAirport(' +
+            aIdx +
+            ', -1)" ' +
+            leftDisabled +
+            ">◀</button>" +
+            '<button class="btn-del" style="background:#252525; border-color:#444; color:#ccc; padding:1px 5px; font-size:9px;" onclick="moveAirport(' +
+            aIdx +
+            ', 1)" ' +
+            rightDisabled +
+            ">▶</button>" +
+            "</div>" +
+            "</div>" +
+            "</th>";
+        });
+        headHtml += "</tr></thead>";
+
+        // 2行目以降: <tbody> 内に行データ（都市名＋数値入力）を出力
+        let bodyHtml = "<tbody>";
+        cities.forEach((c) => {
+          bodyHtml += '<tr><td class="text-left sticky-col" style="font-weight:bold; color:#aaa;">' + c.name + "</td>";
+          airports.forEach((ap) => {
+            if (!airportAccess[c.name]) airportAccess[c.name] = {};
+            const val =
+              airportAccess[c.name][ap.name] !== undefined && airportAccess[c.name][ap.name] !== null
+                ? airportAccess[c.name][ap.name]
+                : "";
+
+            bodyHtml +=
+              "<td>" +
+              '<input type="number" value="' +
+              val +
+              '" placeholder="-" style="width:50px;" onchange="updateAirportAccess(\'' +
+              c.name +
+              "', '" +
+              ap.name +
+              "', this.value)\">" +
+              "</td>";
+          });
+          bodyHtml += "</tr>";
+        });
+        bodyHtml += "</tbody>";
+
+        table.innerHTML = headHtml + bodyHtml;
+      }
+
+      function updateAirportAccess(cityName, airportName, val) {
+        if (!airportAccess[cityName]) airportAccess[cityName] = {};
+        airportAccess[cityName][airportName] = val === "" ? null : Number(val);
+        calculate();
+        onDataChange();
+      }
+
+      // 空港名の変更
+      function updateAirportName(idx, newName) {
+        const oldName = airports[idx].name;
+        if (oldName === newName) return;
+
+        airports[idx].name = newName;
+
+        // アクセス時間データのキー名を付け替え
+        cities.forEach((c) => {
+          if (airportAccess[c.name] && airportAccess[c.name][oldName] !== undefined) {
+            airportAccess[c.name][newName] = airportAccess[c.name][oldName];
+            delete airportAccess[c.name][oldName];
+          }
+        });
+
+        // 路線ペア側の選択肢名も付け替え
+        airportRoutes.forEach((r) => {
+          if (r.origAirport === oldName) r.origAirport = newName;
+          if (r.destAirport === oldName) r.destAirport = newName;
+        });
+
+        renderAirportTable();
+        renderAirportRouteTable(); // ★ 路線設定の選択肢を同期更新
+        calculate();
+        onDataChange();
+      }
+
+      // 空港の新規追加
+      function addAirport() {
+        const newName = "空港" + (airports.length + 1);
+        airports.push({ name: newName });
+
+        renderAirportTable();
+        renderAirportRouteTable(); // ★ 路線設定の選択肢を同期更新
+        onDataChange();
+      }
+
+      // 空港の削除
+      function deleteAirport(idx) {
+        const deletedName = airports[idx].name;
+        airports.splice(idx, 1);
+
+        // 削除された空港のアクセス時間データをクリア
+        cities.forEach((c) => {
+          if (airportAccess[c.name] && airportAccess[c.name][deletedName] !== undefined) {
+            delete airportAccess[c.name][deletedName];
+          }
+        });
+
+        renderAirportTable();
+        renderAirportRouteTable(); // ★ 路線設定の選択肢を同期更新
+        calculate();
+        onDataChange();
+      }
+
+      // 【新規追加】空港の並び替え（▲▼操作）
+      function moveAirport(idx, direction) {
+        const targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= airports.length) return;
+
+        const temp = airports[idx];
+        airports[idx] = airports[targetIdx];
+        airports[targetIdx] = temp;
+
+        renderAirportTable();
+        renderAirportRouteTable(); // ★ 路線設定の選択肢を同期更新
+        onDataChange();
+      }
+
+      function moveCity(idx, direction) {
+        const targetIdx = idx + direction;
+        if (targetIdx < 0 || targetIdx >= cities.length) return;
+
+        const temp = cities[idx];
+        cities[idx] = cities[targetIdx];
+        cities[targetIdx] = temp;
+
+        renderCitiesTable();
+        onDataChange();
+      }
+
+      function confirmCityOrder() {
+        renderModeA();
+        renderAirportTable();
+        onDataChange();
+      }
+
+      function renderModeA() {
+        const container = document.getElementById("modeAContainer");
+        container.innerHTML = "";
+
+        // モード数のカウント表示更新＆追加ボタンの制御
+        const countElem = document.getElementById("modeACount");
+        if (countElem) countElem.innerText = `(${modeA.length}/10種)`;
+
+        const btnAdd = document.getElementById("btnAddModeA");
+        if (btnAdd) {
+          if (modeA.length >= 10) {
+            btnAdd.disabled = true;
+            btnAdd.style.opacity = "0.5";
+            btnAdd.style.cursor = "not-allowed";
+          } else {
+            btnAdd.disabled = false;
+            btnAdd.style.opacity = "1";
+            btnAdd.style.cursor = "pointer";
+          }
+        }
+
+        const currentSegments = [];
+        for (let i = 0; i < cities.length - 1; i++) {
+          currentSegments.push({
+            from: cities[i].name,
+            to: cities[i + 1].name,
+          });
+        }
+
+        modeA.forEach((mA, idx) => {
+          if (!mA.overrideTravel) mA.overrideTravel = {};
+          if (!mA.overrideFreq) mA.overrideFreq = {};
+
+          const div = document.createElement("div");
+          div.className = "mode-item";
+
+          let stationRowsHtml = "";
+          cities.forEach((c) => {
+            const st = mA.stations.find((s) => s.cityName === c.name) || {
+              travel: null,
+            };
+            const travelVal = st.travel !== null && st.travel !== undefined ? st.travel : "-";
+
+            stationRowsHtml += `
+              <tr>
+                <td class="text-left" style="color:#aaa;">${c.name}</td>
+                <td><input type="text" value="${travelVal}" style="width:60px;" onchange="updateModeAStation(${idx}, '${c.name}', this.value)"></td>
+              </tr>
+             `;
+          });
+
+          const newSegmentFreqs = [];
+          let segmentRowsHtml = "";
+
+          currentSegments.forEach((seg) => {
+            let sf = (mA.segmentFreqs || []).find(
+              (s) => (s.from === seg.from && s.to === seg.to) || (s.from === seg.to && s.to === seg.from),
+            );
+
+            if (!sf) {
+              sf = { from: seg.from, to: seg.to, freq: 0 };
+            } else {
+              sf.from = seg.from;
+              sf.to = seg.to;
+            }
+
+            newSegmentFreqs.push(sf);
+
+            segmentRowsHtml += `
+              <tr>
+                <td class="text-left" style="color:#aaa;">${seg.from}─${seg.to}</td>
+                <td><input type="number" step="0.5" value="${sf.freq}" style="width:60px;" onchange="updateModeASegmentFreq(${idx}, '${seg.from}', '${seg.to}', this.value)"></td>
+              </tr>
+            `;
+          });
+
+          mA.segmentFreqs = newSegmentFreqs;
+
+          // 最低1つはモードを残すため、モードが1つの場合は削除ボタンを非表示
+          const deleteBtnHtml =
+            modeA.length > 1
+              ? `<button class="btn-del" style="padding: 2px 6px; font-size: 10px;" onclick="deleteModeA(${idx})">削除</button>`
+              : ``;
+
+          div.innerHTML = `
+            <div class="mode-item-top">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <!-- ★ カラーピッカー -->
+                <input type="color" value="${mA.color || "#3b82f6"}" onchange="modeA[${idx}].color=this.value; calculate(); onDataChange();">
+                <input type="text" value="${mA.name}" style="background:transparent; border:none; border-bottom:1px dashed #666; color:#fff; font-weight:bold; width:90px;" onchange="modeA[${idx}].name=this.value; renderDynamicNavTabs(); onDataChange();">
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div style="display:flex; align-items:center; gap:2px;">
+                  <span style="font-size:10px; color:#aaa;">アクセス:</span>
+                  <input type="number" value="${mA.accessTime || 0}" style="width:38px; padding:2px 3px;" onchange="modeA[${idx}].accessTime=Number(this.value); onDataChange();">
+                  <span style="font-size:10px; color:#aaa;">分</span>
+                </div>
+                <label style="font-size:10px; color:#aaa; display:flex; align-items:center; gap:2px; cursor:pointer;" title="短距離ペナルティ適用">
+                  <input type="checkbox" ${mA.useShortPenalty !== false ? "checked" : ""} onchange="modeA[${idx}].useShortPenalty=this.checked; onDataChange();">
+                  短距離
+                </label>
+                <label class="switch-wrap">
+                  <input type="checkbox" ${mA.enabled ? "checked" : ""} onchange="modeA[${idx}].enabled=this.checked; renderDynamicNavTabs(); calculate(); onDataChange();">
+                  <span class="switch-slider"></span>
+                </label>
+                ${deleteBtnHtml}
+              </div>
+            </div>
+
+            <div style="margin-bottom: 8px;">
+              <button class="btn-config-action" style="width: 100%; border-color: #3b82f6; background: #1e293b; color: #93c5fd;" onclick="openMatrixModalA(${idx})">
+                ⚙️ OD詳細設定（マトリクスで直接編集）
+              </button>
+            </div>
+
+            <div class="grid-2">
+              <div>
+                <div style="font-size:10px; color:#888; margin-bottom:4px; font-weight:bold;">始発所要時間(分) [簡易]</div>
+                <div class="table-container">
+                  <table>
+                    <thead><tr><th class="text-left">都市</th><th>時間</th></tr></thead>
+                    <tbody>${stationRowsHtml}</tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:10px; color:#888; margin-bottom:4px; font-weight:bold;">区間本数(本/h) [簡易]</div>
+                <div class="table-container">
+                  <table>
+                    <thead><tr><th class="text-left">区間</th><th>本数</th></tr></thead>
+                    <tbody>${segmentRowsHtml}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+        renderDynamicNavTabs();
+      }
+
+      // 【差し替え】空港ペア路線設定テーブルの描画
+      function renderAirportRouteTable() {
+        const tbody = document.getElementById("airportRouteTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        airportRoutes.forEach((r, idx) => {
+          // 空港選択肢（<option>）の動的生成
+          let origOptions = "";
+          let destOptions = "";
+          airports.forEach((ap) => {
+            origOptions += `<option value="${ap.name}" ${ap.name === r.origAirport ? "selected" : ""}>${ap.name}</option>`;
+            destOptions += `<option value="${ap.name}" ${ap.name === r.destAirport ? "selected" : ""}>${ap.name}</option>`;
+          });
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+      <td>
+        <select class="text-left" style="width:80px;" onchange="airportRoutes[${idx}].origAirport=this.value; calculate(); onDataChange();">
+          ${origOptions}
+        </select>
+      </td>
+      <td>
+        <select class="text-left" style="width:80px;" onchange="airportRoutes[${idx}].destAirport=this.value; calculate(); onDataChange();">
+          ${destOptions}
+        </select>
+      </td>
+      <td><input type="number" value="${r.travel}" style="width:60px;" onchange="airportRoutes[${idx}].travel=Number(this.value); calculate(); onDataChange();"></td>
+      <td><input type="number" step="0.5" value="${r.freq}" style="width:50px;" onchange="airportRoutes[${idx}].freq=Number(this.value); calculate(); onDataChange();"></td>
+      <td>
+        <input type="checkbox" ${r.enabled !== false ? "checked" : ""} onchange="airportRoutes[${idx}].enabled=this.checked; calculate(); onDataChange();">
+      </td>
+      <td><button class="btn-del" onclick="deleteAirportRoute(${idx})">削除</button></td>
+    `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // 【新規】空港路線ペアの追加
+      function addAirportRouteRow() {
+        const ap1 = airports[0] ? airports[0].name : "羽田";
+        const ap2 = airports[1] ? airports[1].name : "福岡";
+
+        airportRoutes.push({
+          origAirport: ap1,
+          destAirport: ap2,
+          travel: 90,
+          freq: 2.0,
+          color: "#f59e0b",
+          enabled: true,
+        });
+
+        renderAirportRouteTable();
+        calculate();
+        onDataChange();
+      }
+
+      // 【新規】空港路線ペアの削除
+      function deleteAirportRoute(idx) {
+        airportRoutes.splice(idx, 1);
+        renderAirportRouteTable();
+        calculate();
+        onDataChange();
+      }
+
+      function updateModeAStation(mAIdx, cityName, val) {
+        let st = modeA[mAIdx].stations.find((s) => s.cityName === cityName);
+        if (!st) {
+          st = { cityName: cityName, travel: null };
+          modeA[mAIdx].stations.push(st);
+        }
+        st.travel = val === "-" || val.trim() === "" ? null : Number(val);
+        onDataChange();
+      }
+
+      function updateModeASegmentFreq(mAIdx, fromCity, toCity, val) {
+        if (!modeA[mAIdx].segmentFreqs) modeA[mAIdx].segmentFreqs = [];
+        let sf = modeA[mAIdx].segmentFreqs.find(
+          (s) => (s.from === fromCity && s.to === toCity) || (s.from === toCity && s.to === fromCity),
+        );
+        if (!sf) {
+          sf = { from: fromCity, to: toCity, freq: 0 };
+          modeA[mAIdx].segmentFreqs.push(sf);
+        }
+        sf.freq = Number(val);
+        onDataChange();
+      }
+
+      function getPathMinFreq(mA, origIdx, destIdx) {
+        if (!mA.segmentFreqs || mA.segmentFreqs.length === 0) return 0;
+        const minIdx = Math.min(origIdx, destIdx);
+        const maxIdx = Math.max(origIdx, destIdx);
+        if (minIdx === maxIdx) return 0;
+
+        // ★ 発駅または着駅の始発時刻が未設定(null/undefined)の場合のみ停車しないため本数 0
+        const stOrig = mA.stations.find((s) => s.cityName === cities[origIdx].name);
+        const stDest = mA.stations.find((s) => s.cityName === cities[destIdx].name);
+        if (
+          !stOrig ||
+          stOrig.travel === null ||
+          stOrig.travel === undefined ||
+          !stDest ||
+          stDest.travel === null ||
+          stDest.travel === undefined
+        ) {
+          return 0;
+        }
+
+        let minFreq = Infinity;
+        for (let k = minIdx; k < maxIdx; k++) {
+          const c1 = cities[k].name;
+          const c2 = cities[k + 1].name;
+          const sf = mA.segmentFreqs.find((s) => (s.from === c1 && s.to === c2) || (s.from === c2 && s.to === c1));
+          const f = sf ? Number(sf.freq) : 0;
+          if (f < minFreq) minFreq = f;
+        }
+        return minFreq === Infinity || isNaN(minFreq) ? 0 : minFreq;
+      }
+
+      function addCity() {
+        const newName = "都市" + (cities.length + 1);
+        cities.push({ name: newName, p: 50, accessAir: 90 });
+        renderCitiesTable();
+        renderModeA();
+        onDataChange();
+      }
+
+      function deleteCity(idx) {
+        if (cities.length <= 2) {
+          alert("都市は最低2つ必要です。");
+          return;
+        }
+        cities.splice(idx, 1);
+        renderCitiesTable();
+        renderModeA();
+        onDataChange();
+      }
+
+      // モードAの動的追加
+      function addModeA() {
+        if (modeA.length >= 10) {
+          alert("モードAは最大10種までしか追加できません。");
+          return;
+        }
+
+        // 被らないプリセット色を用意
+        const presetColors = ["#ec4899", "#8b5cf6", "#f59e0b", "#10b981", "#6366f1", "#14b8a6", "#f97316", "#e11d48"];
+        const newColor = presetColors[modeA.length % presetColors.length];
+
+        const newModeName = "新モード" + (modeA.length + 1);
+
+        // 都市マスターに基づいた初期駅データを作成
+        const defaultStations = cities.map((c, i) => ({
+          cityName: c.name,
+          travel: i === 0 ? 0 : null, // 起点都市以外は初期未入力
+        }));
+
+        // 区間本数の初期データを作成
+        const defaultSegmentFreqs = [];
+        for (let i = 0; i < cities.length - 1; i++) {
+          defaultSegmentFreqs.push({
+            from: cities[i].name,
+            to: cities[i + 1].name,
+            freq: 0,
+          });
+        }
+
+        modeA.push({
+          name: newModeName,
+          enabled: true,
+          accessTime: 10,
+          useShortPenalty: true,
+          color: newColor,
+          stations: defaultStations,
+          segmentFreqs: defaultSegmentFreqs,
+          overrideTravel: {},
+          overrideFreq: {},
+        });
+
+        renderModeA();
+        renderDynamicNavTabs();
+        calculate();
+        onDataChange();
+      }
+
+      // モードAの削除
+      function deleteModeA(idx) {
+        if (modeA.length <= 1) {
+          alert("モードAは最低1つ必要です。");
+          return;
+        }
+
+        const targetName = modeA[idx].name;
+        if (!confirm(`[ ${targetName} ] を削除してもよろしいですか？`)) return;
+
+        modeA.splice(idx, 1);
+
+        renderModeA();
+        renderDynamicNavTabs();
+        calculate();
+        onDataChange();
+      }
+
+      function addModeBRow() {
+        if (modeB.length > 0) {
+          const lastRow = modeB[modeB.length - 1];
+          modeB.push({
+            orig: lastRow.orig,
+            dest: lastRow.dest,
+            travel: lastRow.travel,
+            freq: lastRow.freq,
+            color: lastRow.color || "#f59e0b",
+            enabled: true,
+          });
+        } else {
+          const c1 = cities[0] ? cities[0].name : "東京";
+          const c2 = cities[cities.length - 1] ? cities[cities.length - 1].name : "新大阪";
+          modeB.push({
+            orig: c1,
+            dest: c2,
+            travel: 70,
+            freq: 2.0,
+            color: "#f59e0b",
+            enabled: true,
+          });
+        }
+        rendeerAirportRouteTable();
+        onDataChange();
+      }
+
+      function deleteModeB(idx) {
+        modeB.splice(idx, 1);
+        rendeerAirportRouteTable();
+        onDataChange();
+      }
+
+      function syncCityNames() {
+        syncCitySelects();
+        renderModeA();
+      }
+
+      function syncCitySelects() {
+        const sOrig = document.getElementById("selectOrig");
+        const sDest = document.getElementById("selectDest");
+        const origVal = sOrig.value || (cities[0] ? cities[0].name : "");
+        const destVal = sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "");
+
+        sOrig.innerHTML = "";
+        sDest.innerHTML = "";
+        cities.forEach((c) => {
+          sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+          sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        });
+
+        sOrig.value = origVal;
+        sDest.value = destVal;
+      }
+
+      function toggleDebug() {
+        const isHidden = document.getElementById("debugPanel").classList.toggle("hidden");
+        if (!isHidden) {
+          document.getElementById("debugPanel").scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      function exportConfig() {
+        const simName = document.getElementById("simNameInput").value.trim() || "無題シミュレーション";
+
+        const configData = {
+          version: "5.0",
+          simName: simName,
+          timestamp: new Date().toISOString(),
+          params: {
+            K: Number(document.getElementById("paramK").value),
+            alpha: Number(document.getElementById("paramAlpha").value),
+            gamma: Number(document.getElementById("paramGamma").value),
+            lambda: Number(document.getElementById("paramLambda").value),
+            Tmin: Number(document.getElementById("paramTmin").value),
+            shortThreshold: Number(document.getElementById("paramShortThreshold").value),
+            shortCoeff: Number(document.getElementById("paramShortCoeff").value),
+            Tstart: Number(document.getElementById("paramTstart").value),
+            paramP: Number(document.getElementById("paramP").value),
+          },
+          cities: cities,
+          modeA: modeA,
+          modeB: modeB,
+          airports: airports,
+          airportAccess: airportAccess,
+          airportRoutes: airportRoutes,
+        };
+
+        let jsonStr = JSON.stringify(configData, null, 2);
+        jsonStr = jsonStr.replace(/\{\n\s+("name"|"orig"|"from"|"cityName")[\s\S]*?\n\s+\}/g, (match) =>
+          match.replace(/\n\s*/g, " "),
+        );
+
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+        const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+        const safeSimName = simName.replace(/[\\/:*?"<>|]/g, "_");
+        const fileName = `traffic_config_${safeSimName}_${dateStr}.json`;
+
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function importConfig(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const config = JSON.parse(e.target.result);
+
+            if (config.simName && document.getElementById("simNameInput")) {
+              document.getElementById("simNameInput").value = config.simName;
+            }
+
+            if (config.params) {
+              if (config.params.K !== undefined) document.getElementById("paramK").value = config.params.K;
+              if (config.params.alpha !== undefined) document.getElementById("paramAlpha").value = config.params.alpha;
+              if (config.params.gamma !== undefined) document.getElementById("paramGamma").value = config.params.gamma;
+              if (config.params.lambda !== undefined)
+                document.getElementById("paramLambda").value = config.params.lambda;
+              if (config.params.Tmin !== undefined) document.getElementById("paramTmin").value = config.params.Tmin;
+              if (config.params.shortThreshold !== undefined)
+                document.getElementById("paramShortThreshold").value = config.params.shortThreshold;
+              if (config.params.shortCoeff !== undefined)
+                document.getElementById("paramShortCoeff").value = config.params.shortCoeff;
+              if (config.params.Tstart !== undefined)
+                document.getElementById("paramTstart").value = config.params.Tstart;
+              if (config.params.paramP !== undefined) document.getElementById("paramP").value = config.params.paramP;
+            }
+
+            if (config.cities && Array.isArray(config.cities)) cities = config.cities;
+            if (config.modeA && Array.isArray(config.modeA)) modeA = config.modeA;
+            if (config.modeB && Array.isArray(config.modeB)) modeB = config.modeB;
+            if (config.airports && Array.isArray(config.airports)) airports = config.airports;
+            if (config.airportAccess) airportAccess = config.airportAccess;
+            if (config.airportRoutes && Array.isArray(config.airportRoutes)) airportRoutes = config.airportRoutes;
+
+            renderCitiesTable();
+            renderModeA();
+            if (typeof renderAirportTable === "function") renderAirportTable();
+            if (typeof renderAirportRouteTable === "function") renderAirportRouteTable(); // ★ タイポ修正
+
+            calculate();
+            renderDynamicNavTabs();
+            onDataChange();
+
+            alert(`設定「${config.simName || file.name}」を正常に読み込みました。`);
+          } catch (err) {
+            alert("設定ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
+            console.error(err);
+          }
+          event.target.value = "";
+        };
+        reader.readAsText(file);
+      }
+
+      function resetDefaults() {
+        localStorage.removeItem(STORAGE_KEY);
+
+        document.getElementById("paramK").value = 0.04;
+        document.getElementById("paramAlpha").value = 0.9;
+        document.getElementById("paramGamma").value = 0.9;
+        document.getElementById("paramLambda").value = 0.03;
+        document.getElementById("paramTmin").value = 0;
+        document.getElementById("paramShortThreshold").value = 60;
+        document.getElementById("paramShortCoeff").value = 0.08;
+        document.getElementById("paramTstart").value = 120;
+        document.getElementById("paramP").value = 1.0;
+        document.getElementById("simNameInput").value = "東海道・山陽新幹線";
+
+        cities = JSON.parse(JSON.stringify(defaultCities));
+        modeA = JSON.parse(JSON.stringify(defaultModeA));
+        modeB = JSON.parse(JSON.stringify(defaultModeB));
+        airports = JSON.parse(JSON.stringify(defaultAirports));
+        airportAccess = JSON.parse(JSON.stringify(defaultAirportAccess));
+        airportRoutes = JSON.parse(JSON.stringify(defaultAirportRoutes));
+
+        const debugPanel = document.getElementById("debugPanel");
+        if (debugPanel && !debugPanel.classList.contains("hidden")) {
+          debugPanel.classList.add("hidden");
+        }
+
+        renderCitiesTable();
+        renderModeA();
+        if (typeof renderAirportTable === "function") renderAirportTable();
+        if (typeof renderAirportRouteTable === "function") renderAirportRouteTable(); // ★ タイポ修正
+
+        calculate();
+        renderDynamicNavTabs();
+        onDataChange();
+      }
+
+      // --- モーダルダイアログ制御 ＆ クリップボード機能 ---
+      function openMatrixModalA(modeIdx) {
+        activeModalType = "A";
+        activeModalModeIdx = modeIdx;
+        const mA = modeA[modeIdx];
+
+        document.getElementById("modalTitle").innerText = `⚙️ OD詳細マトリクス設定 [ ${mA.name} ]`;
+        document.getElementById("pasteTextarea").value = "";
+
+        modalMatrixData = { travel: {}, freq: {} };
+
+        cities.forEach((cOrig, i) => {
+          modalMatrixData.travel[cOrig.name] = {};
+          modalMatrixData.freq[cOrig.name] = {};
+
+          cities.forEach((cDest, j) => {
+            if (i === j) return;
+
+            const stOrig = mA.stations.find((s) => s.cityName === cOrig.name);
+            const stDest = mA.stations.find((s) => s.cityName === cDest.name);
+
+            // ★ 発着両方の駅に時刻データ(nullでない数値)が存在する場合のみ差分を計算。通過駅等は null に設定
+            const autoInVehicle =
+              stOrig &&
+              stDest &&
+              stOrig.travel !== null &&
+              stOrig.travel !== undefined &&
+              stDest.travel !== null &&
+              stDest.travel !== undefined
+                ? Math.abs(stDest.travel - stOrig.travel)
+                : null;
+
+            const autoFreq = getPathMinFreq(mA, i, j);
+
+            const overTravel =
+              mA.overrideTravel && mA.overrideTravel[cOrig.name]
+                ? mA.overrideTravel[cOrig.name][cDest.name]
+                : undefined;
+            const overFreq =
+              mA.overrideFreq && mA.overrideFreq[cOrig.name] ? mA.overrideFreq[cOrig.name][cDest.name] : undefined;
+
+            modalMatrixData.travel[cOrig.name][cDest.name] = {
+              autoVal: autoInVehicle,
+              overrideVal: overTravel !== undefined ? overTravel : null,
+            };
+
+            modalMatrixData.freq[cOrig.name][cDest.name] = {
+              autoVal: autoFreq,
+              overrideVal: overFreq !== undefined ? overFreq : null,
+            };
+          });
+        });
+
+        renderMatrixModalTable();
+        document.getElementById("matrixModal").classList.remove("hidden");
+      }
+
+      function openMatrixModalB() {
+        activeModalType = "B";
+        activeModalModeIdx = null;
+        document.getElementById("modalTitle").innerText = `⚙️ OD詳細マトリクス設定 [ 航空機 ]`;
+        document.getElementById("pasteTextarea").value = "";
+
+        modalMatrixData = { travel: {}, freq: {} };
+
+        cities.forEach((cOrig, i) => {
+          modalMatrixData.travel[cOrig.name] = {};
+          modalMatrixData.freq[cOrig.name] = {};
+
+          cities.forEach((cDest, j) => {
+            if (i === j) return;
+
+            const matchB = modeB.find(
+              (b) =>
+                (b.orig === cOrig.name && b.dest === cDest.name) || (b.orig === cDest.name && b.dest === cOrig.name),
+            );
+            const autoTravel = matchB ? matchB.travel : null;
+            const autoFreq = matchB ? matchB.freq : null;
+
+            modalMatrixData.travel[cOrig.name][cDest.name] = {
+              autoVal: autoTravel,
+              overrideVal: null,
+            };
+            modalMatrixData.freq[cOrig.name][cDest.name] = {
+              autoVal: autoFreq,
+              overrideVal: null,
+            };
+          });
+        });
+
+        renderMatrixModalTable();
+        document.getElementById("matrixModal").classList.remove("hidden");
+      }
+
+      function closeMatrixModal() {
+        document.getElementById("matrixModal").classList.add("hidden");
+        activeModalModeIdx = null;
+      }
+
+      function renderMatrixModalTable() {
+        const table = document.getElementById("matrixModalTable");
+        let headHtml = "<tr><th>発 \\ 着</th>";
+        cities.forEach((c) => {
+          headHtml += `<th>${c.name}</th>`;
+        });
+        headHtml += "</tr>";
+
+        let bodyHtml = "";
+        cities.forEach((cOrig, i) => {
+          bodyHtml += `<tr><td class="text-left" style="font-weight:bold; color:#aaa;">${cOrig.name}</td>`;
+          cities.forEach((cDest, j) => {
+            if (i === j) {
+              bodyHtml += `<td style="color:#444;">-</td>`;
+            } else if (i < j) {
+              // 右上半分：本数 (freq)
+              const cellData = modalMatrixData.freq[cOrig.name][cDest.name];
+              const isOverridden = cellData.overrideVal !== null;
+              const displayVal = isOverridden
+                ? cellData.overrideVal
+                : cellData.autoVal !== null
+                  ? cellData.autoVal
+                  : "";
+              const bgClass = isOverridden ? "cell-override" : "";
+
+              bodyHtml += `
+              <td>
+                <input type="number" step="0.5" class="${bgClass}" style="width:55px; color:#60a5fa;" value="${displayVal}" 
+                  placeholder="${cellData.autoVal !== null ? cellData.autoVal : "0"}"
+                  onchange="updateModalCellValue('freq', '${cOrig.name}', '${cDest.name}', this.value)">
+              </td>`;
+            } else {
+              // 左下半分：所要時間 (travel)
+              // 対応する区間の「本数」を判定（対角線を挟んだ右上方向 [j][i] を参照）
+              const freqData = modalMatrixData.freq[cDest.name][cOrig.name];
+              const currentFreq = freqData.overrideVal !== null ? freqData.overrideVal : freqData.autoVal || 0;
+
+              const cellData = modalMatrixData.travel[cOrig.name][cDest.name];
+              const isOverridden = cellData.overrideVal !== null;
+
+              if (currentFreq <= 0) {
+                // ★ 本数 0 または停車なしの場合：グレーアウトしてハイフン表示
+                bodyHtml += `
+                <td style="background: #181818; color: #444;">
+                  <span style="font-size: 10px; color: #555;">-</span>
+                </td>`;
+              } else {
+                // 本数 > 0 の場合のみ入力枠を表示
+                const displayVal = isOverridden
+                  ? cellData.overrideVal
+                  : cellData.autoVal !== null
+                    ? cellData.autoVal
+                    : "";
+
+                // ★ 自動計算値もなく手動値もない（未入力）場合は赤系クラスを付与
+                const isRequired = displayVal === "" || displayVal === null || displayVal === undefined;
+
+                let bgClass = "";
+                if (isRequired) {
+                  bgClass = "cell-required";
+                } else if (isOverridden) {
+                  bgClass = "cell-override";
                 }
 
-                const Tk = inVehicleTime + waitTime + accessTime + shortPenalty;
-
-                availableModes.push({
-                  name: mA.name,
-                  type: 'A',
-                  inVehicleTime: inVehicleTime,
-                  Tk: Tk,
-                  color: mA.color
-                });
+                bodyHtml += `
+                <td>
+                  <input type="number" step="1" class="${bgClass}" style="width:55px; color:#a78bfa;" value="${displayVal}" 
+                    placeholder=""
+                    onchange="updateModalCellValue('travel', '${cOrig.name}', '${cDest.name}', this.value)">
+                </td>`;
               }
             }
           });
+          bodyHtml += "</tr>";
+        });
 
-          // モードB（航空機）の探索
-          modeB.forEach(mB => {
-            if (!mB.enabled || mB.freq <= 0) return;
-            if ((mB.orig === cOrig.name && mB.dest === cDest.name) || (mB.orig === cDest.name && mB.dest === cOrig.name)) {
-              const accessTime = (cOrig.accessAir || 0) + (cDest.accessAir || 0);
-              const waitTime = 60 / (2 * mB.freq);
-              const Tk = mB.travel + accessTime + waitTime;
+        table.innerHTML = headHtml + bodyHtml;
 
-              availableModes.push({
-                name: "航空機",
-                inVehicleTime: mB.travel,
-                type: 'B',
-                Tk: Tk,
-                color: mB.color || "#f59e0b"
-              });
-            }
-          });
-
-          if (availableModes.length === 0) {
-            odResultsMatrix[cOrig.name][cDest.name] = { Teff: 999, Mtotal: 0, modes: [] };
-          } else {
-            let sumExp = 0;
-            availableModes.forEach(m => {
-              m.expV = Math.exp(-lambda * m.Tk);
-              sumExp += m.expV;
-            });
-
-            // Logsum理論による生の総合等価時間
-            const rawTeff = -Math.log(sumExp) / lambda;
-
-            // ★ Teff の下限ガード：最速モードの純所要時間（Tk）を下回らないように補正
-            const minTk = Math.min(...availableModes.map(m => m.Tk));
-            const Teff = Math.max(minTk, rawTeff);
-
-            // --- ★ 距離的スケーリング S(maxTk) の適用 ---
-            // --- ★ 最長の純乗車時間（inVehicleTime）を取得 ---
-            const maxInVehicleTime = Math.max(...availableModes.map(m => m.inVehicleTime));
-            
-            // 最長乗車時間が Tstart 以上の場合は 1.0、0 の場合は 0.0 へ減衰
-            const u = Math.min(1.0, Math.max(0.0, maxInVehicleTime / Tstart));
-            const scalingS = Math.pow(u, paramP);
-
-            // 重力モデル需要量 Mtotal の算出
-            const Mtotal = (K * Math.pow(cOrig.p * cDest.p, alpha) / Math.pow(Teff + Tmin, gamma)) * scalingS;
-
-            availableModes.forEach(m => {
-              m.share = (m.expV / sumExp) * 100;
-              m.demand = Mtotal * (m.share / 100);
-            });
-
-            odResultsMatrix[cOrig.name][cDest.name] = {
-              Teff: Teff,
-              Mtotal: isNaN(Mtotal) ? 0 : Mtotal,
-              modes: availableModes
-            };
-          }
+        // ★ ① モードA（路線）のみリセットボタンを表示し、モードB（航空機）では非表示にする制御
+        const btnReset = document.getElementById("btnModalReset");
+        if (btnReset) {
+          btnReset.style.display = activeModalType === "A" ? "inline-block" : "none";
         }
       }
 
-      updatePairAnalysis();
-      renderOdFilterControls();
-      renderOdMatrixTable();
-      renderCrossSectionChart();
+      function resetMatrixModalOverrides() {
+        const mA = modeA[activeModalModeIdx];
+        if (!mA) return;
+        if (!confirm(`[ ${mA.name} ] の手動上書き設定（緑色セル）をすべてクリアし、自動計算値に戻しますか？`)) return;
 
-      saveToLocalStorage();
-    }
+        cities.forEach((cOrig, i) => {
+          cities.forEach((cDest, j) => {
+            if (i === j) return;
+            if (modalMatrixData.travel[cOrig.name] && modalMatrixData.travel[cOrig.name][cDest.name]) {
+              modalMatrixData.travel[cOrig.name][cDest.name].overrideVal = null;
+            }
+            if (modalMatrixData.freq[cOrig.name] && modalMatrixData.freq[cOrig.name][cDest.name]) {
+              modalMatrixData.freq[cOrig.name][cDest.name].overrideVal = null;
+            }
+          });
+        });
 
-    function updatePairAnalysis() {
-      const orig = document.getElementById("selectOrig").value;
-      const dest = document.getElementById("selectDest").value;
-
-      const pMtotal = document.getElementById("pairMtotal");
-      const pTeff = document.getElementById("pairTeff");
-      const pBar = document.getElementById("pairShareBar");
-      const pTable = document.getElementById("pairTableBody");
-      const pDebug = document.getElementById("pairDebugInfo");
-
-      if (!orig || !dest || orig === dest || !odResultsMatrix[orig] || !odResultsMatrix[orig][dest]) {
-        if (pMtotal) pMtotal.innerText = "--";
-        if (pTeff) pTeff.innerText = "-- 分";
-        if (pBar) pBar.innerHTML = "";
-        if (pTable) pTable.innerHTML = `<tr><td colspan="4" style="color:#666;">同一都市またはデータがありません</td></tr>`;
-        if (pDebug) pDebug.innerText = "デバッグ情報: 対象外のODペアです";
-        return;
+        renderMatrixModalTable();
       }
 
-      const res = odResultsMatrix[orig][dest];
-      
-      if (pMtotal) pMtotal.innerText = isNaN(res.Mtotal) ? "NaN" : res.Mtotal.toFixed(2);
-      if (pTeff) pTeff.innerText = isNaN(res.Teff) ? "NaN" : (res.Teff < 900 ? res.Teff.toFixed(1) + " 分" : "なし");
+      function updateModalCellValue(type, orig, dest, valStr) {
+        var targetObj = modalMatrixData[type][orig][dest];
 
-      if (pBar) pBar.innerHTML = "";
-      if (pTable) pTable.innerHTML = "";
+        if (valStr.trim() === "") {
+          targetObj.overrideVal = null;
+        } else {
+          var numVal = Number(valStr);
+          if (numVal === targetObj.autoVal) {
+            targetObj.overrideVal = null;
+          } else {
+            targetObj.overrideVal = numVal;
+          }
+        }
 
-      let debugLog = `=== 内部計算ログ [ ${orig} -> ${dest} ] ===\n`;
-      const origObj = cities.find(c => c.name === orig);
-      const destObj = cities.find(c => c.name === dest);
-      
-      debugLog += `・ポテンシャル: p_i=${origObj ? origObj.p : '?'}, p_j=${destObj ? destObj.p : '?'}\n`;
+        // ★【所要時間】対角（反対方向 [dest][orig]）にも同じ値を自動セット
+        if (type === "travel") {
+          if (modalMatrixData.travel[dest] && modalMatrixData.travel[dest][orig]) {
+            var oppTravelObj = modalMatrixData.travel[dest][orig];
+            if (valStr.trim() === "") {
+              oppTravelObj.overrideVal = null;
+            } else {
+              var numValOpp = Number(valStr);
+              if (numValOpp === oppTravelObj.autoVal) {
+                oppTravelObj.overrideVal = null;
+              } else {
+                oppTravelObj.overrideVal = numValOpp;
+              }
+            }
+          }
+        }
+        // ★【本数】対角（反対方向 [dest][orig]）にも同じ本数データを保持
+        else if (type === "freq") {
+          if (modalMatrixData.freq[dest] && modalMatrixData.freq[dest][orig]) {
+            var oppFreqObj = modalMatrixData.freq[dest][orig];
+            if (valStr.trim() === "") {
+              oppFreqObj.overrideVal = null;
+            } else {
+              var numValFreq = Number(valStr);
+              if (numValFreq === oppFreqObj.autoVal) {
+                oppFreqObj.overrideVal = null;
+              } else {
+                oppFreqObj.overrideVal = numValFreq;
+              }
+            }
+          }
+        }
 
-      if (!res.modes || res.modes.length === 0) {
-        debugLog += `・有効なモード: なし (T_eff = 999)\n`;
-      } else {
-        res.modes.forEach(m => {
-          pTable.innerHTML += `
+        renderMatrixModalTable();
+      }
+
+      function copyMatrixToClipboard() {
+        let tsv = "発\\着\t" + cities.map((c) => c.name).join("\t") + "\n";
+
+        cities.forEach((cOrig, i) => {
+          let row = [cOrig.name];
+          cities.forEach((cDest, j) => {
+            if (i === j) {
+              row.push("-");
+            } else if (i < j) {
+              const cell = modalMatrixData.freq[cOrig.name][cDest.name];
+              row.push(cell.overrideVal !== null ? cell.overrideVal : cell.autoVal !== null ? cell.autoVal : "");
+            } else {
+              const cell = modalMatrixData.travel[cOrig.name][cDest.name];
+              row.push(cell.overrideVal !== null ? cell.overrideVal : cell.autoVal !== null ? cell.autoVal : "");
+            }
+          });
+          tsv += row.join("\t") + "\n";
+        });
+
+        navigator.clipboard
+          .writeText(tsv)
+          .then(() => {
+            alert("都市名ヘッダーを含む数表データをクリップボードにコピーしました！Excelにそのままペーストできます。");
+          })
+          .catch((err) => {
+            console.error("コピー失敗:", err);
+          });
+      }
+
+      function applyPastedTSV() {
+        const text = document.getElementById("pasteTextarea").value.trim();
+        if (!text) return;
+
+        const lines = text.split(/\r?\n/).map((l) => l.split("\t"));
+
+        let startRow = 0;
+        let startCol = 0;
+        if (isNaN(Number(lines[0][0])) && lines[0][0] !== "" && lines[0][0] !== "-") startRow = 1;
+        if (
+          lines.length > startRow &&
+          isNaN(Number(lines[startRow][0])) &&
+          lines[startRow][0] !== "" &&
+          lines[startRow][0] !== "-"
+        )
+          startCol = 1;
+
+        // 行数・列数の不一致チェック
+        const dataRows = lines.length - startRow;
+        const dataCols = lines[startRow] ? lines[startRow].length - startCol : 0;
+        const expectedSize = cities.length;
+
+        if (dataRows !== expectedSize || dataCols !== expectedSize) {
+          alert(
+            `貼り付けデータのサイズが一致しません。\n\n・現在の都市数: ${expectedSize} × ${expectedSize}\n・検出データサイズ: ${dataRows} 行 × ${dataCols} 列\n\nデータの行列数を確認して再試行してください。`,
+          );
+          return;
+        }
+
+        let updatedCount = 0;
+
+        for (let i = 0; i < cities.length; i++) {
+          const lineIdx = startRow + i;
+          if (lineIdx >= lines.length) break;
+
+          for (let j = 0; j < cities.length; j++) {
+            if (i === j) continue;
+            const colIdx = startCol + j;
+            if (colIdx >= lines[lineIdx].length) continue;
+
+            const rawVal = lines[lineIdx][colIdx].trim();
+            const origName = cities[i].name;
+            const destName = cities[j].name;
+
+            if (i < j) {
+              updateModalCellValue("freq", origName, destName, rawVal);
+            } else {
+              updateModalCellValue("travel", origName, destName, rawVal);
+            }
+            updatedCount++;
+          }
+        }
+
+        document.getElementById("pasteTextarea").value = "";
+        alert(`クリップボードから ${updatedCount} 個のセルデータを一括読み込みしました。`);
+      }
+
+      function saveMatrixModalInternal() {
+        if (activeModalType === "B") {
+          // モードB（航空機）：マトリクス入力内容から modeB 配列を自動再構築
+          const newModeB = [];
+
+          cities.forEach((cOrig, i) => {
+            cities.forEach((cDest, j) => {
+              if (i >= j) return;
+
+              const fCell = modalMatrixData.freq[cOrig.name] && modalMatrixData.freq[cOrig.name][cDest.name];
+              const tCell = modalMatrixData.travel[cDest.name] && modalMatrixData.travel[cDest.name][cOrig.name];
+
+              const fVal = fCell && fCell.overrideVal !== null ? fCell.overrideVal : fCell ? fCell.autoVal : null;
+              const tVal = tCell && tCell.overrideVal !== null ? tCell.overrideVal : tCell ? tCell.autoVal : null;
+
+              if (fVal > 0 && tVal > 0) {
+                const existing = modeB.find(
+                  (b) =>
+                    (b.orig === cOrig.name && b.dest === cDest.name) ||
+                    (b.orig === cDest.name && b.dest === cOrig.name),
+                );
+
+                newModeB.push({
+                  orig: cOrig.name,
+                  dest: cDest.name,
+                  travel: Number(tVal),
+                  freq: Number(fVal),
+                  color: existing ? existing.color || "#f59e0b" : "#f59e0b",
+                  enabled: existing ? existing.enabled : true,
+                });
+              }
+            });
+          });
+
+          modeB = newModeB;
+          renderAirportRouteTable();
+        } else if (activeModalModeIdx !== null) {
+          // モードAの保存処理：往路・復路両方に手動上書き設定を同期適用
+          const mA = modeA[activeModalModeIdx];
+          mA.overrideTravel = {};
+          mA.overrideFreq = {};
+
+          cities.forEach((cOrig, i) => {
+            cities.forEach((cDest, j) => {
+              if (i === j) return;
+
+              const travelData = modalMatrixData.travel[cOrig.name] && modalMatrixData.travel[cOrig.name][cDest.name];
+              const freqData = modalMatrixData.freq[cOrig.name] && modalMatrixData.freq[cOrig.name][cDest.name];
+
+              if (travelData && travelData.overrideVal !== null) {
+                if (!mA.overrideTravel[cOrig.name]) mA.overrideTravel[cOrig.name] = {};
+                mA.overrideTravel[cOrig.name][cDest.name] = travelData.overrideVal;
+              }
+
+              if (freqData && freqData.overrideVal !== null) {
+                // 往路（orig -> dest）に保存
+                if (!mA.overrideFreq[cOrig.name]) mA.overrideFreq[cOrig.name] = {};
+                mA.overrideFreq[cOrig.name][cDest.name] = freqData.overrideVal;
+
+                // ★ 復路（dest -> orig）にも同本数を保存して片道漏れを防止
+                if (!mA.overrideFreq[cDest.name]) mA.overrideFreq[cDest.name] = {};
+                mA.overrideFreq[cDest.name][cOrig.name] = freqData.overrideVal;
+              }
+            });
+          });
+        }
+        onDataChange();
+      }
+
+      function applyAndCalculateMatrix() {
+        saveMatrixModalInternal();
+        calculate();
+      }
+
+      function saveMatrixModal() {
+        saveMatrixModalInternal();
+        calculate();
+        closeMatrixModal();
+      }
+
+      // 空港ペア設定とアクセス時間から都市ペア（モードB）を一括自動展開する
+      function expandAirportRoutesToModeB() {
+        const expandedModeB = [];
+
+        airportRoutes.forEach((route, routeIdx) => {
+          if (!route.enabled || route.freq <= 0) return;
+
+          const apA = route.origAirport;
+          const apB = route.destAirport;
+
+          const citiesA = cities.filter((c) => airportAccess[c.name] && airportAccess[c.name][apA] > 0);
+          const citiesB = cities.filter((c) => airportAccess[c.name] && airportAccess[c.name][apB] > 0);
+
+          // ルート固有の少しずらしたカラーコードを生成
+          const routeColor = getShiftedColor(route.color || "#f59e0b", routeIdx);
+
+          citiesA.forEach((cA) => {
+            citiesB.forEach((cB) => {
+              if (cA.name === cB.name) return;
+
+              const accessA = airportAccess[cA.name][apA];
+              const accessB = airportAccess[cB.name][apB];
+              const totalInVehicleTravel = route.travel + accessA + accessB;
+
+              expandedModeB.push({
+                orig: cA.name,
+                dest: cB.name,
+                travel: totalInVehicleTravel,
+                freq: route.freq,
+                color: routeColor, // ★ トーンを少し変えたカラー
+                enabled: true,
+                fromAirportRoute: true,
+                routeLabel: apA + "─" + apB, // ★ 例: 羽田─伊丹
+              });
+            });
+          });
+        });
+
+        return expandedModeB;
+      }
+
+      // --- 需要計算コアロジック ---
+      function calculate() {
+        const K = Number(document.getElementById("paramK").value) || 0.04;
+        const alpha = Number(document.getElementById("paramAlpha").value) || 0.9;
+        const gamma = Number(document.getElementById("paramGamma").value) || 0.9;
+        const lambda = Number(document.getElementById("paramLambda").value) || 0.03;
+
+        const Tmin = Number(document.getElementById("paramTmin").value) || 0;
+        const shortThreshold = Number(document.getElementById("paramShortThreshold").value) || 60;
+        const shortCoeff = Number(document.getElementById("paramShortCoeff").value) || 0.08;
+
+        const TstartElem = document.getElementById("paramTstart");
+        const paramPElem = document.getElementById("paramP");
+        const Tstart = TstartElem ? Number(TstartElem.value) || 120 : 120;
+        const paramP = paramPElem ? Number(paramPElem.value) || 1.0 : 1.0;
+
+        odResultsMatrix = {};
+
+        for (let i = 0; i < cities.length; i++) {
+          const cOrig = cities[i];
+          odResultsMatrix[cOrig.name] = {};
+
+          for (let j = 0; j < cities.length; j++) {
+            const cDest = cities[j];
+
+            if (i === j) {
+              odResultsMatrix[cOrig.name][cDest.name] = {
+                Teff: 0,
+                Mtotal: 0,
+                modes: [],
+              };
+              continue;
+            }
+
+            let availableModes = [];
+
+            // --- 1. モードA（路線型）の探索 ---
+            modeA.forEach((mA) => {
+              if (!mA.enabled) return;
+
+              let minFreq = 0;
+              if (
+                mA.overrideFreq &&
+                mA.overrideFreq[cOrig.name] &&
+                mA.overrideFreq[cOrig.name][cDest.name] !== undefined
+              ) {
+                minFreq = mA.overrideFreq[cOrig.name][cDest.name];
+              } else {
+                minFreq = getPathMinFreq(mA, i, j);
+              }
+
+              if (minFreq > 0) {
+                let inVehicleTime = null;
+                if (
+                  mA.overrideTravel &&
+                  mA.overrideTravel[cOrig.name] &&
+                  mA.overrideTravel[cOrig.name][cDest.name] !== undefined
+                ) {
+                  inVehicleTime = mA.overrideTravel[cOrig.name][cDest.name];
+                } else {
+                  const stOrig = mA.stations.find((s) => s.cityName === cOrig.name);
+                  const stDest = mA.stations.find((s) => s.cityName === cDest.name);
+                  if (stOrig && stDest && stOrig.travel !== null && stDest.travel !== null) {
+                    inVehicleTime = Math.abs(stDest.travel - stOrig.travel);
+                  }
+                }
+
+                if (inVehicleTime !== null && inVehicleTime > 0) {
+                  const waitTime = 60 / (2 * minFreq);
+                  const accessTime = mA.accessTime || 0;
+
+                  let shortPenalty = 0;
+                  if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
+                    shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
+                  }
+
+                  const Tk = inVehicleTime + waitTime + accessTime + shortPenalty;
+
+                  availableModes.push({
+                    name: mA.name,
+                    type: "A",
+                    inVehicleTime: inVehicleTime,
+                    Tk: Tk,
+                    color: mA.color,
+                  });
+                }
+              }
+            });
+
+            // --- 2. モードB（航空機）の探索（複数空港ルートの個別評価・合成対応） ---
+            const activeModeBList = expandAirportRoutesToModeB().concat(modeB.filter((m) => !m.fromAirportRoute));
+
+            // ★ 最速1本に絞らず、利用可能な全航空ルートを独立した選択肢として抽出
+            activeModeBList.forEach((mB) => {
+              if (!mB.enabled || mB.freq <= 0) return;
+
+              if (
+                (mB.orig === cOrig.name && mB.dest === cDest.name) ||
+                (mB.orig === cDest.name && mB.dest === cOrig.name)
+              ) {
+                const waitTime = 60 / (2 * mB.freq);
+                const Tk = mB.travel + waitTime;
+
+                // 空港ペア名や経由情報が判定できる場合は名称を判別しやすく設定
+                const airName = mB.routeLabel ? "航空機 (" + mB.routeLabel + ")" : "航空機";
+
+                availableModes.push({
+                  name: airName,
+                  inVehicleTime: mB.travel,
+                  type: "B",
+                  Tk: Tk,
+                  color: mB.color || "#f59e0b",
+                });
+              }
+            });
+
+            // --- 3. 選択確率（シェア）および需要量（Logsum/重力モデル）の計算 ---
+            if (availableModes.length === 0) {
+              odResultsMatrix[cOrig.name][cDest.name] = {
+                Teff: 999,
+                Mtotal: 0,
+                modes: [],
+              };
+            } else {
+              let sumExp = 0;
+              availableModes.forEach((m) => {
+                m.expV = Math.exp(-lambda * m.Tk);
+                sumExp += m.expV;
+              });
+
+              const rawTeff = -Math.log(sumExp) / lambda;
+
+              const minInVehicleTime = Math.min(...availableModes.map((m) => m.inVehicleTime));
+              const Teff = Math.max(Math.max(1.0, minInVehicleTime * 0.5), rawTeff);
+
+              const maxInVehicleTime = Math.max(...availableModes.map((m) => m.inVehicleTime));
+              const u = Math.min(1.0, Math.max(0.0, maxInVehicleTime / Tstart));
+              const scalingS = Math.pow(u, paramP);
+
+              const Mtotal = ((K * Math.pow(cOrig.p * cDest.p, alpha)) / Math.pow(Teff + Tmin, gamma)) * scalingS;
+
+              availableModes.forEach((m) => {
+                m.share = (m.expV / sumExp) * 100;
+                m.demand = Mtotal * (m.share / 100);
+              });
+
+              odResultsMatrix[cOrig.name][cDest.name] = {
+                Teff: Teff,
+                Mtotal: isNaN(Mtotal) ? 0 : Mtotal,
+                modes: availableModes,
+              };
+            }
+          }
+        }
+
+        // 描画およびグラフ・OD表のリアルタイム同期
+        updatePairAnalysis();
+        renderOdFilterControls();
+        renderOdMatrixTable();
+        renderCrossSectionChart();
+
+        saveToLocalStorage();
+      }
+
+      function updatePairAnalysis() {
+        const orig = document.getElementById("selectOrig").value;
+        const dest = document.getElementById("selectDest").value;
+
+        const pMtotal = document.getElementById("pairMtotal");
+        const pTeff = document.getElementById("pairTeff");
+        const pBar = document.getElementById("pairShareBar");
+        const pTable = document.getElementById("pairTableBody");
+        const pDebug = document.getElementById("pairDebugInfo");
+
+        if (!orig || !dest || orig === dest || !odResultsMatrix[orig] || !odResultsMatrix[orig][dest]) {
+          if (pMtotal) pMtotal.innerText = "--";
+          if (pTeff) pTeff.innerText = "-- 分";
+          if (pBar) pBar.innerHTML = "";
+          if (pTable)
+            pTable.innerHTML = `<tr><td colspan="4" style="color:#666;">同一都市またはデータがありません</td></tr>`;
+          if (pDebug) pDebug.innerText = "デバッグ情報: 対象外のODペアです";
+          return;
+        }
+
+        const res = odResultsMatrix[orig][dest];
+
+        if (pMtotal) pMtotal.innerText = isNaN(res.Mtotal) ? "NaN" : res.Mtotal.toFixed(2);
+        if (pTeff) pTeff.innerText = isNaN(res.Teff) ? "NaN" : res.Teff < 900 ? res.Teff.toFixed(1) + " 分" : "なし";
+
+        if (pBar) pBar.innerHTML = "";
+        if (pTable) pTable.innerHTML = "";
+
+        let debugLog = `=== 内部計算ログ [ ${orig} -> ${dest} ] ===\n`;
+        const origObj = cities.find((c) => c.name === orig);
+        const destObj = cities.find((c) => c.name === dest);
+
+        debugLog += `・ポテンシャル: p_i=${origObj ? origObj.p : "?"}, p_j=${destObj ? destObj.p : "?"}\n`;
+
+        if (!res.modes || res.modes.length === 0) {
+          debugLog += `・有効なモード: なし (T_eff = 999)\n`;
+        } else {
+          res.modes.forEach((m) => {
+            pTable.innerHTML += `
             <tr>
               <td class="text-left"><span class="color-dot" style="background:${m.color}"></span><b>${m.name}</b></td>
               <td class="text-right">${isNaN(m.Tk) ? "NaN" : m.Tk.toFixed(1)}分</td>
@@ -1441,241 +2945,431 @@
             </tr>
           `;
 
-          if (m.share > 0 && !isNaN(m.share)) {
-            pBar.innerHTML += `<div class="share-segment" style="width:${m.share}%; background-color:${m.color};" title="${m.name}: ${m.share.toFixed(1)}%"></div>`;
-          }
+            if (m.share > 0 && !isNaN(m.share)) {
+              pBar.innerHTML += `<div class="share-segment" style="width:${m.share}%; background-color:${m.color};" title="${m.name}: ${m.share.toFixed(1)}%"></div>`;
+            }
 
-          debugLog += `・[${m.name}] Tk=${m.Tk} (expV=${m.expV}), share=${m.share}%, demand=${m.demand}\n`;
-        });
+            debugLog += `・[${m.name}] Tk=${m.Tk} (expV=${m.expV}), share=${m.share}%, demand=${m.demand}\n`;
+          });
+        }
+
+        debugLog += `----------------------------------------\n`;
+        debugLog += `・T_eff: ${res.Teff}\n`;
+        debugLog += `・M_total: ${res.Mtotal}\n`;
+
+        if (pDebug) pDebug.innerText = debugLog;
       }
 
-      debugLog += `----------------------------------------\n`;
-      debugLog += `・T_eff: ${res.Teff}\n`;
-      debugLog += `・M_total: ${res.Mtotal}\n`;
+      function renderOdFilterControls() {
+        const container = document.getElementById("odFilterContainer");
+        if (!container) return;
 
-      if (pDebug) pDebug.innerText = debugLog;
-    }
+        let names = new Set();
+        modeA.forEach((m) => {
+          if (m.enabled) names.add(m.name);
+        });
+        // ★ 個別航空ルート名（航空機 (〜)）ではなく、「航空機」に集約
+        names.add("航空機");
+        allModeNames = Array.from(names);
 
-    function renderOdFilterControls() {
-      const container = document.getElementById("odFilterContainer");
-      
-      let names = new Set();
-      modeA.forEach(m => names.add(m.name));
-      names.add("航空機");
-      allModeNames = Array.from(names);
+        const filterTotal = document.getElementById("filterTotal");
+        const isTotalChecked = filterTotal ? filterTotal.checked : true;
 
-      let html = `<label style="font-size:11px; font-weight:bold; color:#60a5fa;"><input type="checkbox" id="filterTotal" checked onchange="toggleOdFilter('total')"> 総需要</label>`;
-      allModeNames.forEach(name => {
-        html += `<label style="font-size:11px; color:#ccc;"><input type="checkbox" class="od-mode-filter" value="${name}" onchange="toggleOdFilter('mode')" style="margin-left:8px;"> ${name}</label>`;
-      });
-      container.innerHTML = html;
-    }
+        let html = `
+          <div style="display:flex; align-items:center; cursor:pointer; opacity:${isTotalChecked ? "1.0" : "0.4"}; text-decoration:${isTotalChecked ? "none" : "line-through"}; font-weight:bold; color:#60a5fa; font-size: 11px; user-select:none;" onclick="toggleOdFilter('total')">
+            <input type="checkbox" id="filterTotal" ${isTotalChecked ? "checked" : ""} style="display:none;">
+            <span>■ 全表示</span>
+          </div>
+        `;
 
-    function toggleOdFilter(type) {
-      const filterTotal = document.getElementById("filterTotal");
-      const modeChecks = document.querySelectorAll(".od-mode-filter");
+        allModeNames.forEach((name) => {
+          const matchA = modeA.find((m) => m.name === name);
+          const color = matchA ? matchA.color : "#f59e0b"; // 航空機は標準オレンジ
 
-      if (type === 'total' && filterTotal.checked) {
-        modeChecks.forEach(ck => ck.checked = false);
-      } else if (type === 'mode') {
-        const anyModeChecked = Array.from(modeChecks).some(ck => ck.checked);
+          const filterChecks = document.querySelectorAll(".od-mode-filter");
+          let isChecked = false;
+          filterChecks.forEach((ck) => {
+            if (ck.value === name && ck.checked) isChecked = true;
+          });
+
+          const opacity = isTotalChecked ? "1.0" : isChecked ? "1.0" : "0.4";
+          const textDecoration = isTotalChecked ? "none" : isChecked ? "none" : "line-through";
+
+          html += `
+            <div style="display:flex; align-items:center; cursor:pointer; opacity:${opacity}; text-decoration:${textDecoration}; font-size: 11px; transition:all 0.15s ease; user-select:none;" onclick="toggleOdFilterMode('${name}')">
+              <input type="checkbox" class="od-mode-filter" value="${name}" ${isChecked ? "checked" : ""} style="display:none;">
+              <span class="color-dot" style="background:${color}"></span>
+              <span style="color:#ccc;">${name}</span>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      function toggleOdFilter(type) {
+        const filterTotal = document.getElementById("filterTotal");
+        const modeChecks = document.querySelectorAll(".od-mode-filter");
+
+        if (type === "total") {
+          filterTotal.checked = true;
+          modeChecks.forEach((ck) => (ck.checked = false));
+        }
+        renderOdFilterControls();
+        renderOdMatrixTable();
+      }
+
+      function toggleOdFilterMode(modeName) {
+        const filterTotal = document.getElementById("filterTotal");
+        const modeChecks = document.querySelectorAll(".od-mode-filter");
+
+        let targetCk = null;
+        modeChecks.forEach((ck) => {
+          if (ck.value === modeName) targetCk = ck;
+        });
+
+        if (targetCk) {
+          targetCk.checked = !targetCk.checked;
+        }
+
+        const anyModeChecked = Array.from(modeChecks).some((ck) => ck.checked);
         if (anyModeChecked) {
           filterTotal.checked = false;
         } else {
           filterTotal.checked = true;
         }
+
+        renderOdFilterControls();
+        renderOdMatrixTable();
       }
-      renderOdMatrixTable();
-    }
 
-    function renderOdMatrixTable() {
-      const table = document.getElementById("odMatrixTable");
-      const isTotal = document.getElementById("filterTotal") ? document.getElementById("filterTotal").checked : true;
-      
-      const filterChecks = document.querySelectorAll(".od-mode-filter");
-      let selectedModes = new Set();
-      filterChecks.forEach(ck => { if (ck.checked) selectedModes.add(ck.value); });
+      function renderOdMatrixTable() {
+        const table = document.getElementById("odMatrixTable");
+        const isTotal = document.getElementById("filterTotal") ? document.getElementById("filterTotal").checked : true;
 
-      let headHtml = "<tr><th>発 \\ 着</th>";
-      cities.forEach(c => { headHtml += `<th>${c.name}</th>`; });
-      headHtml += "</tr>";
+        const filterChecks = document.querySelectorAll(".od-mode-filter");
+        let selectedModes = new Set();
+        filterChecks.forEach((ck) => {
+          if (ck.checked) selectedModes.add(ck.value);
+        });
 
-      let bodyHtml = "";
-      cities.forEach(cOrig => {
-        bodyHtml += `<tr><td class="text-left" style="font-weight:bold; color:#aaa;">${cOrig.name}</td>`;
-        cities.forEach(cDest => {
-          if (cOrig.name === cDest.name) {
-            bodyHtml += `<td style="color:#444;">-</td>`;
-          } else {
-            const res = odResultsMatrix[cOrig.name] ? odResultsMatrix[cOrig.name][cDest.name] : null;
-            if (!res) {
-              bodyHtml += `<td>0.00</td>`;
+        let matrixValues = {};
+        let maxVal = 0;
+
+        cities.forEach((cOrig) => {
+          matrixValues[cOrig.name] = {};
+          cities.forEach((cDest) => {
+            if (cOrig.name === cDest.name) {
+              matrixValues[cOrig.name][cDest.name] = null;
             } else {
+              const res = odResultsMatrix[cOrig.name] ? odResultsMatrix[cOrig.name][cDest.name] : null;
               let val = 0;
-              if (isTotal) {
-                val = res.Mtotal;
-              } else {
-                res.modes.forEach(m => {
-                  if (selectedModes.has(m.name)) val += m.demand;
-                });
+              if (res) {
+                if (isTotal) {
+                  val = res.Mtotal;
+                } else {
+                  res.modes.forEach((m) => {
+                    // モードAの完全一致判定
+                    if (selectedModes.has(m.name)) {
+                      val += m.demand;
+                    }
+                    // ★ 「航空機」選択時：名称が "航空機" で始まる全航空ルートの需要を合算
+                    else if (selectedModes.has("航空機") && m.name.indexOf("航空機") === 0) {
+                      val += m.demand;
+                    }
+                  });
+                }
               }
-              bodyHtml += `<td style="color:#60a5fa; font-weight:bold;">${val.toFixed(2)}</td>`;
+              matrixValues[cOrig.name][cDest.name] = val;
+              if (val > maxVal) maxVal = val;
+            }
+          });
+        });
+
+        let headHtml = "<tr><th>発 \\ 着</th>";
+        cities.forEach((c) => {
+          headHtml += `<th>${c.name}</th>`;
+        });
+        headHtml += "</tr>";
+
+        let bodyHtml = "";
+        cities.forEach((cOrig) => {
+          bodyHtml += `<tr><td class="text-left" style="font-weight:bold; color:#aaa;">${cOrig.name}</td>`;
+          cities.forEach((cDest) => {
+            const val = matrixValues[cOrig.name][cDest.name];
+
+            if (val === null) {
+              bodyHtml += `<td style="color:#444;">-</td>`;
+            } else {
+              const ratio = maxVal > 0 ? val / maxVal : 0;
+              const alpha = ratio > 0 ? (0.12 + ratio * 0.65).toFixed(2) : 0;
+              const bgColor = ratio > 0 ? `rgba(59, 130, 246, ${alpha})` : "transparent";
+              const textColor = ratio > 0.45 ? "#ffffff" : "#60a5fa";
+              const fontWeight = ratio > 0.2 ? "bold" : "normal";
+
+              bodyHtml += `<td style="background-color: ${bgColor}; color: ${textColor}; font-weight: ${fontWeight}; transition: background-color 0.2s ease;">${val.toFixed(2)}</td>`;
+            }
+          });
+          bodyHtml += "</tr>";
+        });
+
+        table.innerHTML = headHtml + bodyHtml;
+      }
+
+      function toggleChartMode(modeName) {
+        if (modeName === "total") {
+          isChartTotalMode = true;
+          disabledChartModes.clear();
+        } else {
+          let activeModeANames = modeA.filter((m) => m.enabled).map((m) => m.name);
+
+          if (isChartTotalMode) {
+            isChartTotalMode = false;
+            activeModeANames.forEach((name) => {
+              if (name !== modeName) disabledChartModes.add(name);
+            });
+          } else {
+            if (disabledChartModes.has(modeName)) {
+              disabledChartModes.delete(modeName);
+            } else {
+              disabledChartModes.add(modeName);
+            }
+
+            const remainingCount = activeModeANames.length - disabledChartModes.size;
+            if (remainingCount === 0 || remainingCount === activeModeANames.length) {
+              isChartTotalMode = true;
+              disabledChartModes.clear();
             }
           }
-        });
-        bodyHtml += "</tr>";
-      });
-
-      table.innerHTML = headHtml + bodyHtml;
-    }
-
-    function renderCrossSectionChart() {
-      const canvas = document.getElementById("crossSectionCanvas");
-      const ctx = canvas.getContext("2d");
-      
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio || 300;
-      canvas.height = rect.height * window.devicePixelRatio || 180;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-      const width = rect.width;
-      const height = rect.height;
-
-      ctx.clearRect(0, 0, width, height);
-
-      if (cities.length < 2) return;
-
-      const numSections = cities.length - 1;
-      let sections = [];
-      for (let s = 0; s < numSections; s++) {
-        sections.push({
-          label: cities[s].name,
-          origIdx: s,
-          destIdx: s + 1
-        });
+        }
+        renderCrossSectionChart();
       }
 
-      let activeModeA = modeA.filter(m => m.enabled);
-      let sectionData = sections.map(() => ({}));
+      function renderCrossSectionChart() {
+        const canvas = document.getElementById("crossSectionCanvas");
+        const ctx = canvas.getContext("2d");
 
-      activeModeA.forEach(mA => {
-        sections.forEach((sec, sIdx) => {
-          let sectionDemand = 0;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio || 300;
+        canvas.height = rect.height * window.devicePixelRatio || 180;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-          for (let i = 0; i < cities.length; i++) {
-            for (let j = 0; j < cities.length; j++) {
-              if (i === j) continue;
-              const passesDown = (i <= sec.origIdx && j >= sec.destIdx);
-              const passesUp = (j <= sec.origIdx && i >= sec.destIdx);
+        const width = rect.width;
+        const height = rect.height;
 
-              if (passesDown || passesUp) {
-                const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
-                if (res && res.modes && res.modes.length > 0) {
-                  const mMatch = res.modes.find(m => m.name === mA.name);
-                  if (mMatch && typeof mMatch.demand === 'number' && !isNaN(mMatch.demand)) {
-                    sectionDemand += mMatch.demand;
+        ctx.clearRect(0, 0, width, height);
+
+        if (cities.length < 2) return;
+
+        const numSections = cities.length - 1;
+        let sections = [];
+        for (let s = 0; s < numSections; s++) {
+          sections.push({
+            label: cities[s].name,
+            origIdx: s,
+            destIdx: s + 1,
+          });
+        }
+
+        let allActiveModeA = modeA.filter((m) => m.enabled);
+        let activeModeA = allActiveModeA.filter((m) => !disabledChartModes.has(m.name));
+
+        let sectionData = sections.map(() => ({}));
+
+        activeModeA.forEach((mA) => {
+          sections.forEach((sec, sIdx) => {
+            let sectionDemand = 0;
+
+            for (let i = 0; i < cities.length; i++) {
+              for (let j = 0; j < cities.length; j++) {
+                if (i === j) continue;
+                const passesDown = i <= sec.origIdx && j >= sec.destIdx;
+                const passesUp = j <= sec.origIdx && i >= sec.destIdx;
+
+                if (passesDown || passesUp) {
+                  const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
+                  if (res && res.modes && res.modes.length > 0) {
+                    const mMatch = res.modes.find((m) => m.name === mA.name);
+                    if (mMatch && typeof mMatch.demand === "number" && !isNaN(mMatch.demand)) {
+                      sectionDemand += mMatch.demand;
+                    }
                   }
                 }
               }
             }
-          }
-          sectionData[sIdx][mA.name] = sectionDemand;
+            sectionData[sIdx][mA.name] = sectionDemand;
+          });
         });
-      });
 
-      let maxStack = 0;
-      let stackedData = sections.map((sec, sIdx) => {
-        let currentHeight = 0;
-        let modeY = {};
-        activeModeA.forEach(mA => {
-          const dem = sectionData[sIdx][mA.name] || 0;
-          modeY[mA.name] = { y0: currentHeight, y1: currentHeight + dem };
-          currentHeight += dem;
+        let maxStack = 0;
+        let stackedData = sections.map((sec, sIdx) => {
+          let currentHeight = 0;
+          let modeY = {};
+          activeModeA.forEach((mA) => {
+            const dem = sectionData[sIdx][mA.name] || 0;
+            modeY[mA.name] = { y0: currentHeight, y1: currentHeight + dem };
+            currentHeight += dem;
+          });
+          if (currentHeight > maxStack) maxStack = currentHeight;
+          return modeY;
         });
-        if (currentHeight > maxStack) maxStack = currentHeight;
-        return modeY;
-      });
 
-      if (maxStack === 0) maxStack = 1;
+        if (maxStack === 0) maxStack = 1;
 
-      const paddingLeft = 35;
-      const paddingBottom = 30;
-      const paddingTop = 10;
-      const paddingRight = 10;
-      const chartW = width - paddingLeft - paddingRight;
-      const chartH = height - paddingTop - paddingBottom;
+        const paddingLeft = 35;
+        const paddingBottom = 30;
+        const paddingTop = 10;
+        const paddingRight = 10;
+        const chartW = width - paddingLeft - paddingRight;
+        const chartH = height - paddingTop - paddingBottom;
 
-      ctx.strokeStyle = "#333333";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(paddingLeft, paddingTop);
-      ctx.lineTo(paddingLeft, height - paddingBottom);
-      ctx.lineTo(width - paddingRight, height - paddingBottom);
-      ctx.stroke();
-
-      ctx.fillStyle = "#888888";
-      ctx.font = "9px sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText(maxStack.toFixed(0), paddingLeft - 4, paddingTop + 8);
-      ctx.fillText((maxStack / 2).toFixed(0), paddingLeft - 4, paddingTop + chartH / 2 + 3);
-      ctx.fillText("0", paddingLeft - 4, height - paddingBottom);
-
-      const stepX = chartW / numSections;
-
-      ctx.textAlign = "center";
-      sections.forEach((sec, idx) => {
-        const x = paddingLeft + (idx + 0.5) * stepX;
-        ctx.fillText(sec.label, x, height - paddingBottom + 14);
-      });
-
-      activeModeA.forEach(mA => {
-        ctx.fillStyle = mA.color + "bb";
-        ctx.strokeStyle = mA.color;
+        ctx.strokeStyle = "#333333";
+        ctx.lineWidth = 1;
         ctx.beginPath();
+        ctx.moveTo(paddingLeft, paddingTop);
+        ctx.lineTo(paddingLeft, height - paddingBottom);
+        ctx.lineTo(width - paddingRight, height - paddingBottom);
+        ctx.stroke();
 
+        ctx.fillStyle = "#888888";
+        ctx.font = "9px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(maxStack.toFixed(0), paddingLeft - 4, paddingTop + 8);
+        ctx.fillText((maxStack / 2).toFixed(0), paddingLeft - 4, paddingTop + chartH / 2 + 3);
+        ctx.fillText("0", paddingLeft - 4, height - paddingBottom);
+
+        const stepX = chartW / numSections;
+
+        ctx.textAlign = "center";
         sections.forEach((sec, idx) => {
           const x = paddingLeft + (idx + 0.5) * stepX;
-          const valY1 = stackedData[idx][mA.name].y1;
-          const y = height - paddingBottom - (valY1 / maxStack) * chartH;
-          if (idx === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+          ctx.fillText(sec.label, x, height - paddingBottom + 14);
         });
 
-        for (let idx = sections.length - 1; idx >= 0; idx--) {
-          const x = paddingLeft + (idx + 0.5) * stepX;
-          const valY0 = stackedData[idx][mA.name].y0;
-          const y = height - paddingBottom - (valY0 / maxStack) * chartH;
-          ctx.lineTo(x, y);
-        }
+        activeModeA.forEach((mA) => {
+          ctx.fillStyle = mA.color + "bb";
+          ctx.strokeStyle = mA.color;
+          ctx.beginPath();
 
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      });
+          sections.forEach((sec, idx) => {
+            const x = paddingLeft + (idx + 0.5) * stepX;
+            const valY1 = stackedData[idx][mA.name].y1;
+            const y = height - paddingBottom - (valY1 / maxStack) * chartH;
+            if (idx === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
 
-      const legendDiv = document.getElementById("chartLegend");
-      legendDiv.innerHTML = "";
-      activeModeA.forEach(mA => {
-        legendDiv.innerHTML += `<div style="display:flex; align-items:center;"><span class="color-dot" style="background:${mA.color}"></span><span style="color:#ccc;">${mA.name}</span></div>`;
-      });
-    }
+          for (let idx = sections.length - 1; idx >= 0; idx--) {
+            const x = paddingLeft + (idx + 0.5) * stepX;
+            const valY0 = stackedData[idx][mA.name].y0;
+            const y = height - paddingBottom - (valY0 / maxStack) * chartH;
+            ctx.lineTo(x, y);
+          }
 
-    // --- 初期化 ---
-    document.addEventListener("DOMContentLoaded", function() {
-      const loaded = loadFromLocalStorage();
-      
-      renderCitiesTable();
-      renderModeA();
-      renderModeBTable();
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        });
 
-      if (loaded) {
-        if (loaded.selectOrig) document.getElementById("selectOrig").value = loaded.selectOrig;
-        if (loaded.selectDest) document.getElementById("selectDest").value = loaded.selectDest;
+        const legendDiv = document.getElementById("chartLegend");
+        legendDiv.innerHTML = "";
+
+        const totalOpacity = isChartTotalMode ? "1.0" : "0.4";
+        const totalDecoration = isChartTotalMode ? "none" : "line-through";
+        legendDiv.innerHTML += `
+        <div style="display:flex; align-items:center; cursor:pointer; opacity:${totalOpacity}; text-decoration:${totalDecoration}; font-weight:bold; color:#60a5fa; user-select:none;" onclick="toggleChartMode('total')">
+          <span>■ 全表示</span>
+        </div>
+      `;
+
+        allActiveModeA.forEach((mA) => {
+          const isDisabled = !isChartTotalMode && disabledChartModes.has(mA.name);
+          const opacity = isChartTotalMode ? "1.0" : !isDisabled ? "1.0" : "0.4";
+          const textDecoration = isChartTotalMode ? "none" : !isDisabled ? "none" : "line-through";
+
+          legendDiv.innerHTML += `
+          <div style="display:flex; align-items:center; cursor:pointer; opacity:${opacity}; text-decoration:${textDecoration}; transition:all 0.15s ease; user-select:none;" onclick="toggleChartMode('${mA.name}')">
+            <span class="color-dot" style="background:${mA.color}"></span>
+            <span style="color:#ccc;">${mA.name}</span>
+          </div>
+        `;
+        });
       }
 
-      calculate();
-      renderDynamicNavTabs();
-    });
-  </script>
-</body>
+      // 同一系統（オレンジ系）の明るさ・鮮やかさだけを微調整する関数
+      function getShiftedColor(baseHex, index) {
+        // 1番目は基準色、2番目以降は明度(L)と彩度(S)をわずかに変化させる設定
+        const lightnessShifts = [50, 62, 38, 56, 44]; // 明度 (%)
+        const saturationShifts = [92, 85, 95, 78, 88]; // 彩度 (%)
+
+        const l = lightnessShifts[index % lightnessShifts.length];
+        const s = saturationShifts[index % saturationShifts.length];
+
+        // 色相(H)は38度（オレンジ）で固定し、明度と彩度のみでバリエーションを作成
+        return "hsl(38, " + s + "%, " + l + "%)";
+      }
+
+      // --- 初期化 ---
+      document.addEventListener("DOMContentLoaded", function () {
+        const loaded = loadFromLocalStorage();
+
+        renderCitiesTable();
+        renderModeA();
+        renderAirportRouteTable();
+        renderAirportTable(); // ①-2 空港マスター用テーブルも合わせて初期描画
+
+        if (loaded) {
+          if (loaded.selectOrig) document.getElementById("selectOrig").value = loaded.selectOrig;
+          if (loaded.selectDest) document.getElementById("selectDest").value = loaded.selectDest;
+        }
+
+        // 1. マウスホイールによる勝手な値変更を防ぐ
+        document.addEventListener(
+          "wheel",
+          function (e) {
+            if (document.activeElement && document.activeElement.type === "number") {
+              document.activeElement.blur(); // フォーカスを外してスクロールによる値変更を無効化
+            }
+          },
+          { passive: false },
+        );
+
+        // 2. タップ／クリック／フォーカス時に数値全体を自動選択する（ブルブル震え防止策適用）
+        document.addEventListener("focusin", function (e) {
+          var target = e.target;
+          if (target && (target.type === "number" || target.type === "text")) {
+            // すでにフォーカス処理中の場合は連鎖発火を防ぐ
+            if (target.dataset.isSelecting === "true") return;
+            target.dataset.isSelecting = "true";
+
+            setTimeout(function () {
+              // 要素がまだドキュメント上に存在し、アクティブである場合のみ選択
+              if (document.activeElement === target && typeof target.select === "function") {
+                target.select();
+              }
+              target.dataset.isSelecting = "false";
+            }, 50);
+          }
+        });
+
+        calculate();
+        renderDynamicNavTabs();
+        pushHistory();
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+          if (e.shiftKey) {
+            redo();
+          } else {
+            undo();
+          }
+          e.preventDefault();
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+          redo();
+          e.preventDefault();
+        }
+      });
+    </script>
+  </body>
 </html>
