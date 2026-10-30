@@ -144,7 +144,7 @@ function calculate() {
       });
 
       // --- 2. モードB（航空機）の探索（複数空港ルートの個別評価・合成対応） ---
-      const activeModeBList = expandAirportRoutesToModeB().concat(modeB.filter((m) => !m.fromAirportRoute));
+      const activeModeBList = expandAirportRoutesToModeB();
 
       // ★ 最速1本に絞らず、利用可能な全航空ルートを独立した選択肢として抽出
       activeModeBList.forEach((mB) => {

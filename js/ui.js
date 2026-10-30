@@ -42,9 +42,7 @@ function renderDynamicNavTabs() {
   });
 
   const hasEnabledModeB =
-    typeof airportRoutes !== "undefined"
-      ? airportRoutes.some((r) => r.enabled !== false && r.freq > 0)
-      : modeB.some((mB) => mB.enabled !== false && mB.freq > 0);
+    typeof airportRoutes !== "undefined" && airportRoutes.some((r) => r.enabled !== false && r.freq > 0);
 
   if (hasEnabledModeB) {
     htmlFull +=
@@ -780,7 +778,7 @@ function openMatrixModalB() {
     cities.forEach((cDest, j) => {
       if (i === j) return;
 
-      const matchB = modeB.find(
+      const matchB = activeModeBList.find(
         (b) => (b.orig === cOrig.name && b.dest === cDest.name) || (b.orig === cDest.name && b.dest === cOrig.name),
       );
       const autoTravel = matchB ? matchB.travel : null;

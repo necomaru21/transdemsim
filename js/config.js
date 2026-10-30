@@ -256,7 +256,6 @@ function pushHistory() {
     },
     cities: cities,
     modeA: modeA,
-    modeB: modeB,
     airports: airports, // ★ 空港マスター同期
     airportAccess: airportAccess, // ★ アクセス時間同期
     airportRoutes: airportRoutes, // ★ 航空路線ペア同期
@@ -322,7 +321,6 @@ function applyHistoryState(jsonStr) {
 
     if (state.cities) cities = JSON.parse(JSON.stringify(state.cities));
     if (state.modeA) modeA = JSON.parse(JSON.stringify(state.modeA));
-    if (state.modeB) modeB = JSON.parse(JSON.stringify(state.modeB));
     if (state.airports) airports = JSON.parse(JSON.stringify(state.airports));
     if (state.airportAccess) airportAccess = JSON.parse(JSON.stringify(state.airportAccess));
     if (state.airportRoutes) airportRoutes = JSON.parse(JSON.stringify(state.airportRoutes));
@@ -377,7 +375,6 @@ function saveToLocalStorage() {
       },
       cities: cities,
       modeA: modeA,
-      modeB: modeB,
       airports: airports,
       airportAccess: airportAccess,
       airportRoutes: airportRoutes,
@@ -417,7 +414,6 @@ function loadFromLocalStorage() {
 
     if (state.cities && Array.isArray(state.cities)) cities = state.cities;
     if (state.modeA && Array.isArray(state.modeA)) modeA = state.modeA;
-    if (state.modeB && Array.isArray(state.modeB)) modeB = state.modeB;
     if (state.airports && Array.isArray(state.airports)) airports = state.airports;
     if (state.airportAccess) airportAccess = state.airportAccess;
     if (state.airportRoutes && Array.isArray(state.airportRoutes)) airportRoutes = state.airportRoutes;
@@ -549,7 +545,6 @@ function resetDefaults() {
 
   cities = JSON.parse(JSON.stringify(defaultCities));
   modeA = JSON.parse(JSON.stringify(defaultModeA));
-  modeB = JSON.parse(JSON.stringify(defaultModeB));
   airports = JSON.parse(JSON.stringify(defaultAirports));
   airportAccess = JSON.parse(JSON.stringify(defaultAirportAccess));
   airportRoutes = JSON.parse(JSON.stringify(defaultAirportRoutes));
