@@ -1,0 +1,1218 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>交通需要予測シミュレーター ver6.2</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+        padding: 12px;
+        max-width: none;
+        margin: 0 auto;
+        line-height: 1.4;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .header-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .main-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.3px;
+      }
+      .sub-title {
+        font-size: 11px;
+        color: #888888;
+        margin-top: 1px;
+      }
+      .btn-debug-toggle {
+        background: #252525;
+        color: #bbbbbb;
+        border: 1px solid #3a3a3a;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-debug-toggle:active {
+        background: #333333;
+      }
+
+      .btn-config-action {
+        background: #252525;
+        color: #93c5fd;
+        border: 1px solid #1d4ed8;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-config-action:active {
+        background: #1e3a8a;
+      }
+
+      .card {
+        background: #1e1e1e;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .card-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: #dddddd;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 6px;
+      }
+      .grid-5 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        gap: 6px;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .input-label {
+        font-size: 10px;
+        color: #999999;
+        margin-bottom: 3px;
+        font-weight: 500;
+      }
+      input[type="number"],
+      input[type="text"],
+      select {
+        width: 100%;
+        background: #282828;
+        border: 1px solid #383838;
+        color: #ffffff;
+        padding: 6px 5px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+      /* 数値入力（input type="number"）の上下矢印（スピンボタン）を非表示 */
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      input[type="number"] {
+        -moz-appearance: textfield; /* Firefox用 */
+      }
+      input:focus,
+      select:focus {
+        border-color: #3b82f6 !important;
+        outline: none;
+      }
+      .btn-add {
+        background: #1e3a8a;
+        color: #93c5fd;
+        border: 1px solid #1d4ed8;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 6px;
+      }
+      .btn-del {
+        background: #3f1d1d;
+        color: #fca5a5;
+        border: 1px solid #7f1d1d;
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        cursor: pointer;
+      }
+
+      .action-row {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .btn-reset {
+        background: #282828;
+        color: #cccccc;
+        border: 1px solid #3a3a3a;
+        padding: 11px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .mode-item {
+        background: #242424;
+        border: 1px solid #303030;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+      }
+      .mode-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #303030;
+      }
+
+      .switch-wrap {
+        position: relative;
+        display: inline-block;
+        width: 34px;
+        height: 18px;
+      }
+      .switch-wrap input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .switch-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #444444;
+        transition: 0.2s;
+        border-radius: 20px;
+      }
+      .switch-slider:before {
+        position: absolute;
+        content: "";
+        height: 12px;
+        width: 12px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.2s;
+        border-radius: 50%;
+      }
+      input:checked + .switch-slider {
+        background-color: #2563eb;
+      }
+      input:checked + .switch-slider:before {
+        transform: translateX(16px);
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      th {
+        text-align: center;
+        color: #888888;
+        padding: 6px;
+        border-bottom: 1px solid #303030;
+        font-weight: 600;
+        background: #1e1e1e;
+      }
+      td {
+        padding: 5px 4px;
+        border-bottom: 1px solid #242424;
+        text-align: center;
+      }
+      .text-left {
+        text-align: left;
+      }
+      .text-right {
+        text-align: right;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .summary-card {
+        background: #242424;
+        border: 1px solid #303030;
+        border-radius: 8px;
+        padding: 8px;
+        text-align: center;
+      }
+      .summary-title {
+        font-size: 10px;
+        color: #888888;
+        margin-bottom: 2px;
+      }
+      .summary-value {
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .val-blue {
+        color: #60a5fa;
+      }
+      .val-purple {
+        color: #a78bfa;
+      }
+
+      .share-bar-container {
+        height: 18px;
+        background: #282828;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        margin-bottom: 12px;
+      }
+      .share-segment {
+        height: 100%;
+        transition: width 0.2s ease-out;
+      }
+      .color-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+
+      .chart-container {
+        width: 100%;
+        height: 180px;
+        position: relative;
+        margin-top: 10px;
+      }
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* 追従操作バー (スマホ標準) */
+      .sticky-action-bar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(18, 18, 18, 0.95);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 8px 0;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #2a2a2a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn-calc-sticky {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        white-space: nowrap;
+      }
+      .btn-calc-sticky:active {
+        background: #1d4ed8;
+      }
+
+      .btn-undo-redo {
+        background: #252525;
+        color: #888888;
+        border: 1px solid #3a3a3a;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      /* 動的モードジャンプボタン */
+      .nav-tabs-sticky {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+        width: 100%;
+      }
+      .btn-nav-jump {
+        background: #1e1e1e;
+        color: #dddddd;
+        border: 1px solid #444444;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+      }
+      .btn-nav-jump:hover {
+        background: #2a2a2a;
+        filter: brightness(1.2);
+      }
+      .btn-nav-jump:active {
+        transform: translateY(1px);
+      }
+
+      /* モーダルダイアログ */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+      }
+      .modal-card {
+        background: #1e1e1e;
+        border: 1px solid #3b82f6;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+      }
+      .modal-header {
+        padding: 12px 16px;
+        background: #252525;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-body {
+        padding: 16px;
+        overflow-y: auto;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .cell-override {
+        background-color: #1e3a29 !important;
+        border-color: #10b981 !important;
+        color: #6ee7b7 !important;
+      }
+      /* 未入力（要設定）セルの強調スタイル */
+      .cell-required {
+        background-color: #451a1a !important;
+        border: 1px solid #ef4444 !important;
+        color: #fca5a5 !important;
+      }
+      .cell-required::placeholder {
+        color: transparent; /* 文字としての「要入力」は非表示 */
+      }
+      /* デフォルト（1920px未満）：モードAカード内のジャンプボタンは非表示 */
+      #modeAQuickNavTabs {
+        display: none;
+      }
+      /* PC・大画面向けレスポンシブ対応 (1920px以上) */
+      @media (min-width: 1920px) {
+        html,
+        body {
+          height: 100vh;
+          overflow: hidden;
+        }
+        body {
+          display: flex;
+          flex-direction: column;
+          padding: 10px 16px;
+        }
+        .top-controls-pc {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 10px;
+          background: #181818;
+          padding: 6px 12px;
+          border-radius: 8px;
+          border: 1px solid #2a2a2a;
+        }
+        .top-title-area {
+          margin-bottom: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .sim-name-box {
+          margin-bottom: 0;
+        }
+        .sticky-action-bar {
+          position: static;
+          background: transparent;
+          border-bottom: none;
+          padding: 0;
+          margin-bottom: 0;
+          backdrop-filter: none;
+        }
+        #dynamicNavTabs {
+          display: none !important;
+        }
+        .main-grid-pc {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr 1fr 1.3fr;
+          gap: 10px;
+          flex: 1;
+          min-height: 0;
+        }
+        .main-grid-pc > .card {
+          height: 100%;
+          margin-bottom: 0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .card-scroll-body {
+          flex: 1;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+        .card-scroll-body::-webkit-scrollbar {
+          width: 5px;
+        }
+        .card-scroll-body::-webkit-scrollbar-track {
+          background: #1a1a1a;
+        }
+        .card-scroll-body::-webkit-scrollbar-thumb {
+          background: #333;
+          border-radius: 3px;
+        }
+        #modeAQuickNavTabs {
+          display: flex !important;
+          flex-wrap: wrap;
+          gap: 4px;
+          margin-bottom: 10px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid #2a2a2a;
+        }
+        /* PC大画面時のモーダルレイアウト（左寄せで結果画面を露出・高さを一杯に確保） */
+        .modal-overlay {
+          justify-content: flex-start;
+          padding: 12px 16px;
+        }
+        .modal-card {
+          width: 100vw; /* 結果がどのみちぼやけて見えないのでモーダルを広げて入力時の見やすさを優先 */
+          max-width: none;
+          height: calc(100vh - 24px);
+          max-height: none;
+        }
+      }
+
+      /* 空港マスターテーブル囲み枠（縦横スクロール領域） */
+      .airport-scroll-container {
+        max-height: 70vh; /* 必要に応じて縦幅の上限を調整 */
+        overflow: auto;
+        position: relative;
+        border: 1px solid #333;
+        border-radius: 6px;
+      }
+
+      /* カラーピッカー用カスタム丸ボタン */
+      .color-picker-dot {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1px solid #555;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        transition: transform 0.1s ease;
+      }
+      .color-picker-dot:active {
+        transform: scale(0.9);
+      }
+
+      /* パレットモーダル用グリッドアイテム */
+      .color-palette-item {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: transform 0.1s ease;
+      }
+      .color-palette-item:hover {
+        transform: scale(1.2);
+        z-index: 10;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+      }
+      .color-palette-item.selected {
+        outline: 2px solid #3b82f6;
+        outline-offset: 1px;
+      }
+
+      /* テーブル全体の境界線統合設定 */
+      #airportAccessTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+      }
+
+      #airportAccessTable th,
+      #airportAccessTable td {
+        border-bottom: 1px solid #303030;
+        border-right: 1px solid #303030;
+        padding: 4px;
+      }
+
+      /* 1. 上下スクロール時に空港名ヘッダー（1行目）を最上部に固定 */
+      #airportAccessTable thead th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #1e1e1e !important;
+        box-shadow: 0 1px 0 #444; /* 下境界線の視認性を強化 */
+      }
+
+      /* 2. 左右スクロール時に都市名（1列目）を左端に固定 */
+      #airportAccessTable .sticky-col {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background-color: #181818 !important;
+        border-right: 2px solid #444;
+      }
+
+      /* 3. 左上交差点セル（都市 \ 空港）は最前面(z-index:20)に固定 */
+      #airportAccessTable thead th.sticky-col {
+        z-index: 20;
+        background-color: #1e1e1e !important;
+      }
+
+      /* OD詳細マトリクスモーダルのテーブル固定ヘッダー設定 */
+      #matrixModalTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+      }
+
+      /* 1. 行ヘッダー（1行目：着都市名）を上に固定 */
+      #matrixModalTable thead th,
+      #matrixModalTable tr:first-child th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #252525 !important;
+        box-shadow: 0 1px 0 #444;
+      }
+
+      /* 2. 列ヘッダー（1列目：発都市名）を左に固定 */
+      #matrixModalTable td:first-child,
+      #matrixModalTable th:first-child {
+        position: -webkit-sticky;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background-color: #1e1e1e !important;
+        border-right: 2px solid #444;
+      }
+
+      /* 3. 左上交差点セル（発 \ 着）を最前面に固定 */
+      #matrixModalTable tr:first-child th:first-child {
+        z-index: 20;
+        background-color: #252525 !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- タイトル & シミュレーション名 -->
+    <div class="top-controls-pc">
+      <div class="top-title-area">
+        <div>
+          <div class="main-title">交通需要予測シミュレーター ver6.2</div>
+          <div class="sub-title">全線シミュレーション (Logsum統合・ODマトリクス詳細オーバーライド)</div>
+        </div>
+        <div class="sim-name-box">
+          <span class="input-label" style="margin: 0; white-space: nowrap">名称:</span>
+          <input
+            type="text"
+            id="simNameInput"
+            value="東海道・山陽新幹線"
+            style="text-align: left; padding: 4px 8px; width: 180px"
+            onchange="
+              currentSimName = this.value;
+              onDataChange();
+            "
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作ボタンバー -->
+    <div class="sticky-action-bar">
+      <div style="display: flex; gap: 4px">
+        <button class="btn-config-action" onclick="exportConfig()">📥 保存</button>
+        <button class="btn-config-action" onclick="document.getElementById('configFileInput').click()">
+          📤 読み込み
+        </button>
+        <input type="file" id="configFileInput" accept=".json" style="display: none" onchange="importConfig(event)" />
+      </div>
+
+      <div style="display: flex; gap: 6px; align-items: center">
+        <button class="btn-undo-redo" id="btnUndo" title="元に戻す (Ctrl+Z)" onclick="undo()" disabled>↶</button>
+        <button class="btn-undo-redo" id="btnRedo" title="やり直す (Ctrl+Y)" onclick="redo()" disabled>↷</button>
+        <button class="btn-calc-sticky" onclick="calculate()">⚡ 計算する</button>
+      </div>
+
+      <div class="nav-tabs-sticky" id="dynamicNavTabs"></div>
+    </div>
+
+    <!-- メインコンテンツ領域 -->
+    <div class="main-grid-pc">
+      <!-- ① 都市マスター設定 -->
+      <div class="card" id="sec-city">
+        <div class="card-header">① 都市マスター設定</div>
+        <div class="card-scroll-body">
+          <details
+            style="
+              background: #181818;
+              border: 1px solid #333;
+              border-radius: 6px;
+              padding: 6px 8px;
+              margin-bottom: 8px;
+            "
+            open
+          >
+            <summary
+              style="
+                font-size: 11px;
+                font-weight: bold;
+                color: #60a5fa;
+                cursor: pointer;
+                user-select: none;
+                outline: none;
+              "
+            >
+              🏙️ 都市一覧 ＆ ポテンシャル設定（タップで展開）
+            </summary>
+            <div style="margin-top: 6px">
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th class="text-left">都市名</th>
+                      <th>ポテンシャル</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cityTableBody"></tbody>
+                </table>
+              </div>
+              <div style="display: flex; gap: 6px; margin-top: 6px">
+                <button class="btn-add" style="margin-top: 0" onclick="addCity()">＋ 都市を追加</button>
+                <button
+                  class="btn-add"
+                  style="margin-top: 0; background: #065f46; border-color: #047857; color: #a7f3d0"
+                  onclick="confirmCityOrder()"
+                >
+                  ✓ 並び順を確定
+                </button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- ② 交通モード設定 【モードA】 -->
+      <div class="card">
+        <div class="card-header" style="flex-direction: column; align-items: flex-start; gap: 6px">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+            <span>② 交通モード設定（モードA）</span>
+            <span style="font-size: 10px; color: #888" id="modeACount"></span>
+          </div>
+
+          <!-- ★ 固定ヘッダー内にジャンプボタンコンテナを移動 -->
+          <div id="modeAQuickNavTabs" style="width: 100%"></div>
+        </div>
+
+        <div class="card-scroll-body">
+          <div style="font-size: 11px; font-weight: bold; color: #60a5fa; margin-bottom: 6px">
+            【モードA】 路線型（新幹線・特急・バス等：最大10種）
+          </div>
+          <div id="modeAContainer"></div>
+
+          <button class="btn-add" id="btnAddModeA" onclick="addModeA()">＋ モードAを追加（最大10種）</button>
+        </div>
+      </div>
+
+      <!-- ② 交通モード設定 【モードB】 -->
+      <div class="card" id="sec-modeb">
+        <div class="card-header">
+          <span>② 交通モード設定（モードB）</span>
+          <span style="font-size: 10px; color: #888">空港対空港モデル</span>
+        </div>
+        <div class="card-scroll-body">
+          <div style="font-size: 11px; font-weight: bold; color: #f59e0b; margin-bottom: 6px">
+            【モードB】 拠点型（航空機等：空港対空港管理）
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <!-- 1. 空港マスター管理 -->
+            <details style="background: #181818; border: 1px solid #333; border-radius: 6px; padding: 6px 8px">
+              <summary
+                style="
+                  font-size: 11px;
+                  font-weight: bold;
+                  color: #fde68a;
+                  cursor: pointer;
+                  user-select: none;
+                  outline: none;
+                "
+              >
+                ✈️ 1. 対象空港リスト（タップで開閉）
+              </summary>
+              <div style="margin-top: 8px">
+                <div class="table-container" style="margin-bottom: 6px">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="text-left">空港名</th>
+                        <th>順序・操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="airportTableBody"></tbody>
+                  </table>
+                </div>
+                <button
+                  class="btn-add"
+                  style="margin-top: 0; border-color: #d97706; background: #451a03; color: #fde68a"
+                  onclick="addAirport()"
+                >
+                  ＋ 空港を追加
+                </button>
+              </div>
+            </details>
+
+            <!-- 2. 都市 ➔ 空港アクセス時間 -->
+            <details style="background: #181818; border: 1px solid #333; border-radius: 6px; padding: 6px 8px">
+              <summary
+                style="
+                  font-size: 11px;
+                  font-weight: bold;
+                  color: #fde68a;
+                  cursor: pointer;
+                  user-select: none;
+                  outline: none;
+                "
+              >
+                ⏱️ 2. 都市 ➔ 最寄り空港アクセス時間設定(分)（タップで開閉）
+              </summary>
+              <div style="margin-top: 8px">
+                <div class="table-container" style="margin-bottom: 4px">
+                  <table id="airportAccessTable">
+                    <thead id="airportAccessThead"></thead>
+                    <tbody id="airportAccessTbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+
+            <!-- 3. 空港間フライト路線ペア設定 -->
+            <details style="background: #181818; border: 1px solid #333; border-radius: 6px; padding: 6px 8px" open>
+              <summary
+                style="
+                  font-size: 11px;
+                  font-weight: bold;
+                  color: #fde68a;
+                  cursor: pointer;
+                  user-select: none;
+                  outline: none;
+                "
+              >
+                🛫 3. 拠点間航空路線ペア設定（所要時間・本数）（タップで開閉）
+              </summary>
+              <div style="margin-top: 8px">
+                <div class="table-container" style="margin-bottom: 6px">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th class="text-left">出発空港</th>
+                        <th class="text-left">到着空港</th>
+                        <th>飛行(分)</th>
+                        <th>本数(本/h)</th>
+                        <th>有効</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="airportRouteTableBody"></tbody>
+                  </table>
+                </div>
+                <button
+                  class="btn-add"
+                  style="margin-top: 0; border-color: #d97706; background: #451a03; color: #fde68a"
+                  onclick="addAirportRouteRow()"
+                >
+                  ＋ 航空路線ペアを追加
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ アナリティクス＆結果表示 -->
+      <div class="card" id="sec-result">
+        <div class="card-header">③ 計算結果＆分析</div>
+        <div class="card-scroll-body">
+          <!-- 1. 任意2都市選択プレビュー -->
+          <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px">
+            1. 区間ピンポイント分析
+          </div>
+          <div class="grid-2" style="margin-bottom: 10px">
+            <div class="input-group">
+              <span class="input-label">起点都市</span>
+              <select id="selectOrig" onchange="updatePairAnalysis()"></select>
+            </div>
+            <div class="input-group">
+              <span class="input-label">終点都市</span>
+              <select id="selectDest" onchange="updatePairAnalysis()"></select>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-title">総需要量 M<sub>total</sub></div>
+              <div class="summary-value val-blue" id="pairMtotal">--</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">総合等価時間 T<sub>eff</sub></div>
+              <div class="summary-value val-purple" id="pairTeff">--</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 10px">
+            <div style="font-size: 10px; color: #888888; margin-bottom: 4px; font-weight: 600">
+              機関別市場シェア (%)
+            </div>
+            <div class="share-bar-container" id="pairShareBar"></div>
+          </div>
+
+          <div class="table-container" style="margin-bottom: 16px">
+            <table>
+              <thead>
+                <tr>
+                  <th class="text-left">モード</th>
+                  <th class="text-right">総合時間 T<sub>k</sub></th>
+                  <th class="text-right">需要量 M<sub>k</sub></th>
+                  <th class="text-right">シェア</th>
+                </tr>
+              </thead>
+              <tbody id="pairTableBody"></tbody>
+            </table>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
+
+          <!-- 2. 全都市間需要マトリクス (OD表) -->
+          <div class="card-header" style="margin-bottom: 6px">
+            <span>2. 都市間需要マトリクス (OD表)</span>
+          </div>
+          <div style="font-size: 10px; color: #999; margin-bottom: 6px">
+            集計対象モードを選択（タップで表示トグル切り替え）
+          </div>
+          <div id="odFilterContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px"></div>
+
+          <div class="table-container" style="margin-bottom: 16px">
+            <table id="odMatrixTable"></table>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
+
+          <!-- 3. 通過需要（断面交通量）の積み上げ面グラフ -->
+          <div class="card-header" style="margin-bottom: 4px">
+            <span>3. 区間別通過需要（断面交通量）</span>
+          </div>
+          <div style="font-size: 10px; color: #999; margin-bottom: 6px">
+            モードA（路線型）の区間ごとの通過需要を積み上げて表示（タップで表示トグル切り替え）
+          </div>
+
+          <div class="chart-container">
+            <canvas id="crossSectionCanvas"></canvas>
+          </div>
+          <div
+            id="chartLegend"
+            style="
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 10px;
+              margin-top: 10px;
+              font-size: 11px;
+            "
+          ></div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 16px 0 12px 0" />
+
+          <!-- 4. デバッグパネル開閉トグル ＆ リセットボタン -->
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px">
+            <button class="btn-reset" style="padding: 6px 10px; font-size: 11px" onclick="resetDefaults()">
+              ↺ デフォルトにリセット
+            </button>
+            <button class="btn-debug-toggle" onclick="toggleDebug()">🛠️ デバッグ設定・計算ログを表示</button>
+          </div>
+
+          <!-- 5. デバッグ設定 ＆ 内部計算ログ -->
+          <div id="debugPanel" class="card hidden" style="border-color: #2563eb; margin-bottom: 0; background: #181818">
+            <div class="card-header" style="color: #60a5fa; margin-bottom: 6px">モデル定数のリアルタイム調整</div>
+            <div class="grid-4" style="margin-bottom: 8px">
+              <div class="input-group">
+                <span class="input-label">定数 K</span
+                ><input type="number" id="paramK" step="0.001" value="0.040" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">規模 α</span
+                ><input type="number" id="paramAlpha" step="0.01" value="0.90" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">抵抗 γ</span
+                ><input type="number" id="paramGamma" step="0.01" value="0.90" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">感度 λ</span
+                ><input type="number" id="paramLambda" step="0.001" value="0.03" onchange="onDataChange()" />
+              </div>
+            </div>
+            <div class="grid-5">
+              <div class="input-group">
+                <span class="input-label">飽和時間 T_min (分)</span
+                ><input type="number" id="paramTmin" step="1" value="0" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">短距離閾値 (分)</span
+                ><input type="number" id="paramShortThreshold" step="1" value="60" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">短距離係数</span
+                ><input type="number" id="paramShortCoeff" step="0.005" value="0.08" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">減衰開始時間 T_start (分)</span
+                ><input type="number" id="paramTstart" step="5" value="120" onchange="onDataChange()" />
+              </div>
+              <div class="input-group">
+                <span class="input-label">減衰パワー p</span
+                ><input type="number" id="paramP" step="0.1" value="1.0" onchange="onDataChange()" />
+              </div>
+            </div>
+
+            <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-top: 12px; margin-bottom: 4px">
+              ピンポイント区間の内部計算ログ
+            </div>
+            <div
+              id="pairDebugInfo"
+              style="
+                padding: 8px;
+                background: #111;
+                border: 1px solid #333;
+                border-radius: 6px;
+                font-size: 10px;
+                color: #aaa;
+                font-family: monospace;
+                white-space: pre-wrap;
+                word-break: break-all;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /.main-grid-pc -->
+
+    <!-- OD詳細設定ポップアップモーダル -->
+    <div id="matrixModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div style="font-weight: bold; color: #60a5fa; font-size: 14px" id="modalTitle">⚙️ OD詳細マトリクス設定</div>
+          <button class="btn-del" onclick="closeMatrixModal()">✕ 閉じる</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size: 11px; color: #aaa; margin-bottom: 10px">
+            ・<b style="color: #60a5fa">右上半分</b>：区間本数 (本/h) ｜ ・<b style="color: #a78bfa">左下半分</b
+            >：所要時間 (分)<br />
+            ・緑背景のセルは<b style="color: #6ee7b7">上書き済み</b
+            >です。空欄にして確定すると自動計算（簡易設定）へ復帰します。
+          </div>
+
+          <div class="table-container" style="flex: 1; max-height: none; overflow-y: auto">
+            <table id="matrixModalTable"></table>
+          </div>
+
+          <div style="margin-top: 12px; background: #181818; padding: 10px; border-radius: 8px; border: 1px solid #333">
+            <div style="font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 4px">
+              📋 Excelからのコピペ（TSV一括流し込み）
+            </div>
+            <textarea
+              id="pasteTextarea"
+              rows="2"
+              placeholder="Excelでコピーした数表（または数値のみ）をここにCtrl+Vで貼り付け、下の「一括反映」を押してください..."
+              style="
+                width: 100%;
+                background: #222;
+                border: 1px solid #444;
+                color: #fff;
+                font-size: 11px;
+                padding: 6px;
+                border-radius: 4px;
+                font-family: monospace;
+              "
+            ></textarea>
+            <div style="display: flex; gap: 8px; margin-top: 6px">
+              <button class="btn-config-action" style="padding: 6px 12px" onclick="applyPastedTSV()">
+                📥 クリップボード内容を一括反映
+              </button>
+              <button
+                class="btn-config-action"
+                style="padding: 6px 12px; border-color: #059669; color: #6ee7b7"
+                onclick="copyMatrixToClipboard()"
+              >
+                📋 都市名付きでExcel用にコピー
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px">
+            <button
+              class="btn-reset"
+              style="padding: 6px 12px; font-size: 11px; border-color: #d97706; color: #fde68a"
+              onclick="resetMatrixModalOverrides()"
+            >
+              ↺ 自動計算値にリセット
+            </button>
+            <button class="btn-reset" style="padding: 6px 12px" onclick="closeMatrixModal()">キャンセル</button>
+            <button
+              class="btn-config-action"
+              style="padding: 6px 14px; background: #1d4ed8; color: #fff; border: none"
+              onclick="applyAndCalculateMatrix()"
+            >
+              確定
+            </button>
+            <button class="btn-calc-sticky" onclick="saveMatrixModal()">✓ 確定して閉じる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- カラーパレット選択モーダル -->
+    <div
+      id="colorPaletteModal"
+      class="modal-overlay hidden"
+      onclick="if (event.target === this) closeColorPaletteModal();"
+    >
+      <div class="modal-card" style="max-width: 360px">
+        <div class="modal-header">
+          <div style="font-weight: bold; color: #60a5fa; font-size: 13px">🎨 カラーパレット選択</div>
+          <button class="btn-del" onclick="closeColorPaletteModal()">✕ 閉じる</button>
+        </div>
+        <div class="modal-body" style="padding: 12px">
+          <div style="font-size: 10px; color: #aaa; margin-bottom: 8px">60色の標準プリセットから選択</div>
+
+          <!-- 50色グリッド表示領域 -->
+          <div
+            id="colorPaletteContainer"
+            style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-bottom: 12px"
+          ></div>
+
+          <!-- カラーコード手入力エリア -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: #181818;
+              padding: 6px 8px;
+              border-radius: 6px;
+              border: 1px solid #333;
+            "
+          >
+            <span style="font-size: 10px; color: #aaa">HEX指定:</span>
+            <input
+              type="text"
+              id="colorModalHexInput"
+              maxlength="7"
+              style="width: 80px; font-size: 11px; font-family: monospace"
+              placeholder="#3B82F6"
+            />
+            <button
+              class="btn-config-action"
+              style="padding: 4px 8px; font-size: 10px"
+              onclick="selectPresetColor(document.getElementById('colorModalHexInput').value)"
+            >
+              反映
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 外部JavaScriptの読み込み -->
+    <script src="js/config.js"></script>
+    <script src="js/calc.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/charts.js"></script>
+  </body>
+</html>
