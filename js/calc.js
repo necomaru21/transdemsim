@@ -213,8 +213,7 @@ function calculate() {
   renderOdFilterControls();
   renderOdMatrixTable();
   renderCrossSectionChart();
-
-if (typeof renderSingleCityAnalysis === "function") {
+  if (typeof renderSingleCityAnalysis === "function") {
     renderSingleCityAnalysis();
   }
 
