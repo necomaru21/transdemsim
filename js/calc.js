@@ -213,6 +213,11 @@ function calculate() {
   renderOdFilterControls();
   renderOdMatrixTable();
   renderCrossSectionChart();
+  
+  // ★ 追加: 1都市起点需要・バブルチャートのリアルタイム同期
+  if (typeof renderSingleCityAnalysis === "function") {
+    renderSingleCityAnalysis();
+  }
 
   saveToLocalStorage();
 }
