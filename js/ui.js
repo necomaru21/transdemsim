@@ -629,11 +629,10 @@ function syncCityNames() {
 function onSelectCityChange() {
   const origVal = document.getElementById("selectOrig").value;
   const destVal = document.getElementById("selectDest").value;
-
-saveToLocalStorage();
-
+  
   // 描画更新（charts.js の関数を直接呼ぶ）
   updatePairAnalysis();
+  saveToLocalStorage();
 }
 
 // ==========================================
