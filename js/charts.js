@@ -424,9 +424,9 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  const rowHeight =24;     // 1行の高さ(px)
-  const barHeight = 13;     // 棒の太さ(px)
-  const fontSize = 10;      // フォントサイズ(px)
+  const rowHeight =18;     // 1行の高さ(px)
+  const barHeight = 10;     // 棒の太さ(px)
+  const fontSize = 9;      // フォントサイズ(px)
   const paddingTop = 10;    // 上余白(px)
   const paddingBottom = 10; // 下余白(px)
   const paddingLeft = 80;   // 都市名エリア(px)
