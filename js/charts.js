@@ -308,8 +308,8 @@ function renderBoardingAlightingChart() {
   // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
   
-  // 1都市あたり 35px を確保（画面幅より大きければスクロール化）
-  const minWidthPerCity = 35;
+  // 1都市あたり 25px を確保（画面幅より大きければスクロール化）
+  const minWidthPerCity = 25;
   const calculatedWidth = Math.max(parentWidth, cities.length * minWidthPerCity);
   const cssHeight = 200;
 
@@ -450,8 +450,8 @@ function renderCrossSectionChart() {
   // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
   
-  // 1区間あたり 35px を確保
-  const minWidthPerSec = 35;
+  // 1区間あたり 25px を確保
+  const minWidthPerSec = 25;
   const calculatedWidth = Math.max(parentWidth, numSections * minWidthPerSec);
   const cssHeight = 200;
 
