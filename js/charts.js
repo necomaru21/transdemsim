@@ -299,21 +299,26 @@ function switchDirection(dir) {
 // 各駅乗降客数グラフ描画 (方向別: 上り / 下り)
 // ==========================================
 function renderBoardingAlightingChart() {
-  const canvas = document.getElementById("boardingAlightingCanvas");
+    const canvas = document.getElementById("boardingAlightingCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
   if (!cities || cities.length === 0) return;
 
-  // 1. スクロール用の最小横幅計算 (1都市あたり35px確保、最小でも親幅)
+  // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
+  
+  // 1都市あたり 35px を確保（画面幅より大きければスクロール化）
   const minWidthPerCity = 35;
   const calculatedWidth = Math.max(parentWidth, cities.length * minWidthPerCity);
+  const cssHeight = 200;
 
-  const cssHeight = 200; // 高さ（縦書きラベル用に少し広め）
+  // ★重要：CSSの minWidth と width を px 単位で強力に固定し、伸縮を防ぐ
+  canvas.style.minWidth = calculatedWidth + "px";
   canvas.style.width = calculatedWidth + "px";
   canvas.style.height = cssHeight + "px";
 
+  // Canvas内部解像度の設定（Retina/高解像度ディスプレイ対応）
   canvas.width = calculatedWidth * window.devicePixelRatio;
   canvas.height = cssHeight * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -434,7 +439,7 @@ function renderBoardingAlightingChart() {
 // 断面交通量グラフ描画 (横スクロール・縦書きラベル対応)
 // ==========================================
 function renderCrossSectionChart() {
-  const canvas = document.getElementById("crossSectionCanvas");
+    const canvas = document.getElementById("crossSectionCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
@@ -442,15 +447,20 @@ function renderCrossSectionChart() {
 
   const numSections = cities.length - 1;
 
-  // 1. スクロール用の最小横幅計算 (1区間あたり35px確保、最小でも親幅)
+  // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
+  
+  // 1区間あたり 35px を確保
   const minWidthPerSec = 35;
   const calculatedWidth = Math.max(parentWidth, numSections * minWidthPerSec);
+  const cssHeight = 200;
 
-  const cssHeight = 200; // 高さ (縦書きラベル用に確保)
+  // ★重要：CSSの minWidth と width を px 単位で強力に固定
+  canvas.style.minWidth = calculatedWidth + "px";
   canvas.style.width = calculatedWidth + "px";
   canvas.style.height = cssHeight + "px";
 
+  // Canvas内部解像度の設定
   canvas.width = calculatedWidth * window.devicePixelRatio;
   canvas.height = cssHeight * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
