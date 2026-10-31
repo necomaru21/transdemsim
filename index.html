@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>交通需要予測シミュレーター ver6.2</title>
+    <title>交通需要予測シミュレーター ver7.0</title>
     <style>
       * {
         box-sizing: border-box;
@@ -685,7 +685,7 @@
     <div class="top-controls-pc">
       <div class="top-title-area">
         <div>
-          <div class="main-title">交通需要予測シミュレーター ver6.2</div>
+          <div class="main-title">交通需要予測シミュレーター ver7.0</div>
           <div class="sub-title">全線シミュレーション (Logsum統合・ODマトリクス詳細オーバーライド)</div>
         </div>
         <div class="sim-name-box">
@@ -953,11 +953,14 @@
             <div class="share-bar-container" id="pairShareBar"></div>
           </div>
 
+          <!-- ★ テーブルヘッダーへ「実時間」「頻度」を追加 -->
           <div class="table-container" style="margin-bottom: 16px">
             <table>
               <thead>
                 <tr>
                   <th class="text-left">モード</th>
+                  <th class="text-right">実時間</th>
+                  <th class="text-right">頻度</th>
                   <th class="text-right">総合時間 T<sub>k</sub></th>
                   <th class="text-right">需要量 M<sub>k</sub></th>
                   <th class="text-right">シェア</th>
@@ -965,6 +968,29 @@
               </thead>
               <tbody id="pairTableBody"></tbody>
             </table>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
+
+          <!-- ★ 新規追加: 1都市起点需要・選択モード＆バブルチャート分析 -->
+          <div class="card-header" style="margin-bottom: 6px">
+            <span>1都市起点需要・モード選択＆バブルチャート分析</span>
+          </div>
+          <div class="input-group" style="margin-bottom: 10px; max-width: 200px;">
+            <span class="input-label">分析対象（起点都市）</span>
+            <select id="selectSingleCity" onchange="renderSingleCityAnalysis()"></select>
+          </div>
+
+          <!-- 横向き積み上げ棒グラフ -->
+          <div style="font-size: 10px; color: #999; margin-bottom: 4px;">各目的地都市への需要量とモード別内訳</div>
+          <div class="chart-container" style="height: 200px; margin-bottom: 16px;">
+            <canvas id="singleCityBarCanvas"></canvas>
+          </div>
+
+          <!-- バブルチャート -->
+          <div style="font-size: 10px; color: #999; margin-bottom: 4px;">目的地都市別の需要構造（横軸:時間距離, 縦軸:移動需要, 円サイズ:相手ポテンシャル）</div>
+          <div class="chart-container" style="height: 220px;">
+            <canvas id="singleCityBubbleCanvas"></canvas>
           </div>
 
           <hr style="border: 0; border-top: 1px solid #303030; margin: 14px 0" />
