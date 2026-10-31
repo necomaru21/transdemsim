@@ -408,7 +408,7 @@ function renderSingleCityAnalysis() {
   renderSingleCityBubbleChart(orig);
 }
 
-// ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域全体の高さを自動連動）
+// ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域全体の高さを自動連動・描画消失防止版）
 function renderSingleCityBarChart(orig) {
   const canvas = document.getElementById("singleCityBarCanvas");
   if (!canvas) return;
@@ -426,23 +426,24 @@ function renderSingleCityBarChart(orig) {
   const paddingLeft = 80;   // 都市名エリア(px)
   const paddingRight = 40;  // 右側数値エリア(px)
 
-  // 都市数に応じて全体の高さを動的計算
+  // 1. 親コンテナの横幅を「サイズ変更前」に取得
+  const container = canvas.parentElement;
+  const width = (container ? container.clientWidth : 0) || canvas.getBoundingClientRect().width || 300;
+
+  // 2. 都市数に応じて全体の高さを動的計算
   const calculatedHeight = destCities.length * rowHeight + paddingTop + paddingBottom;
 
-  // 親コンテナ（.chart-container）および Canvas の高さを強制更新
-  const container = canvas.parentElement;
+  // 3. 親コンテナおよび Canvas の高さを設定
   if (container) {
     container.style.height = calculatedHeight + "px";
   }
 
-  const rect = canvas.getBoundingClientRect();
-  const width = rect.width || 300;
-
   canvas.width = width * window.devicePixelRatio;
   canvas.height = calculatedHeight * window.devicePixelRatio;
+  canvas.style.width = width + "px";
   canvas.style.height = calculatedHeight + "px";
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   ctx.clearRect(0, 0, width, calculatedHeight);
 
   const chartW = width - paddingLeft - paddingRight;
