@@ -639,13 +639,12 @@ function saveSelectState() {
   if (sDest && sDest.value) localStorage.setItem("transdemsim_selectDest", sDest.value);
 }
 
-// セレクトボックスの同期・初期化処理
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
   if (!sOrig || !sDest) return;
 
-  // 1. JSON等で都市データが空（0件）の場合
+  // ① JSON読み込み等で都市データが存在しない（0件）場合
   if (!cities || cities.length === 0) {
     sOrig.innerHTML = "";
     sDest.innerHTML = "";
@@ -657,49 +656,31 @@ function syncCitySelects() {
     return;
   }
 
-  // <option> が未生成（初回ロード時やJSON読み込み直後）の場合のみ <option> を生成
-  if (sOrig.children.length === 0) {
-    sOrig.innerHTML = "";
-    sDest.innerHTML = "";
-    cities.forEach((c) => {
-      sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-      sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-    });
-  }
+  // ② 選択肢（<option>）を再生成
+  sOrig.innerHTML = "";
+  sDest.innerHTML = "";
+  cities.forEach((c) => {
+    sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+  });
 
+  // ③ デフォルト値の定義
   const defaultOrig = cities[0].name;
   const defaultDest = cities[cities.length - 1].name;
 
-  // --- ★ 判定：入力値が null/空、または都市リストに存在しない時だけ書き換える ---
+  // ④ 「内部保存値（Storage）」または「デフォルト値」から決定値を算出
+  const savedOrig = localStorage.getItem("transdemsim_selectOrig");
+  const savedDest = localStorage.getItem("transdemsim_selectDest");
 
-  // 起点都市のチェック
-  const origValid = sOrig.value && cities.some((c) => c.name === sOrig.value);
-  if (!origValid) {
-    // 保存値があればそれを試し、無ければデフォルト(先頭)をセット
-    const savedOrig = localStorage.getItem("transdemsim_selectOrig");
-    if (savedOrig && cities.some((c) => c.name === savedOrig)) {
-      sOrig.value = savedOrig;
-    } else {
-      sOrig.value = defaultOrig;
-    }
-  }
+  const targetOrig = (savedOrig && cities.some((c) => c.name === savedOrig)) ? savedOrig : defaultOrig;
+  const targetDest = (savedDest && cities.some((c) => c.name === savedDest)) ? savedDest : defaultDest;
 
-  // 終点都市のチェック
-  const destValid = sDest.value && cities.some((c) => c.name === sDest.value);
-  if (!destValid) {
-    // 保存値があればそれを試し、無ければデフォルト(末尾)をセット
-    const savedDest = localStorage.getItem("transdemsim_selectDest");
-    if (savedDest && cities.some((c) => c.name === savedDest)) {
-      sDest.value = savedDest;
-    } else {
-      sDest.value = defaultDest;
-    }
-  }
+  // ⑤ 決定した値を画面上の見た目（<select>.value）へ即座に反映
+  sOrig.value = targetOrig;
+  sDest.value = targetDest;
 
-  // 最新の選択状態を Storage に保存
+  // ⑥ 内部（Storage）と描画をその場で同期
   saveSelectState();
-
-  // 描画実行
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
