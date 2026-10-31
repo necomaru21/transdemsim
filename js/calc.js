@@ -161,6 +161,7 @@ function calculate() {
           availableModes.push({
             name: airName,
             inVehicleTime: mB.travel,
+            freq: mB.freq, // ★ 追加: 運行頻度(本/h)
             type: "B",
             Tk: Tk,
             color: mB.color || "#f59e0b",
