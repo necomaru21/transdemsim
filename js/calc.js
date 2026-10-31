@@ -212,7 +212,8 @@ function calculate() {
   updatePairAnalysis();
   renderOdFilterControls();
   renderOdMatrixTable();
-  renderCrossSectionChart();
+  renderBoardingAlightingChart();
+renderCrossSectionChart();
   renderSingleCityAnalysis();
 
   saveToLocalStorage();
