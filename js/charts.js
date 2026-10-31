@@ -38,6 +38,8 @@ function updatePairAnalysis() {
       pTable.innerHTML += `
             <tr>
               <td class="text-left"><span class="color-dot" style="background:${m.color}"></span><b>${m.name}</b></td>
+              <td class="text-right">${isNaN(m.inVehicleTime) ? "-" : m.inVehicleTime.toFixed(0)}分</td>
+              <td class="text-right">${isNaN(m.freq) ? "-" : m.freq.toFixed(1)}本/h</td>
               <td class="text-right">${isNaN(m.Tk) ? "NaN" : m.Tk.toFixed(1)}分</td>
               <td class="text-right" style="color:#60a5fa; font-weight:bold;">${isNaN(m.demand) ? "NaN" : m.demand.toFixed(2)}</td>
               <td class="text-right" style="font-weight:bold;">${isNaN(m.share) ? "NaN" : m.share.toFixed(1)}%</td>
