@@ -626,11 +626,22 @@ function syncCityNames() {
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  if (!sOrig || !sDest) return;
+  if (!sOrig || !sDest || !cities || cities.length === 0) return;
 
-  const origVal = sOrig.value || (cities[0] ? cities[0].name : "");
-  const destVal = sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "");
+  // 1. 都市リストの先頭(1番上)と末尾(一番下)を取得
+  const defaultOrig = cities[0].name;
+  const defaultDest = cities[cities.length - 1].name;
 
+  // 2. 現在の選択値を取得（null/空文字の場合はデフォルト値を適用）
+  const origVal = sOrig.value || defaultOrig;
+  let destVal = sDest.value || defaultDest;
+
+  // 万一、起点と終点が同じ都市になってしまった場合の自動調整（都市数が2つ以上ある場合）
+  if (cities.length > 1 && origVal === destVal) {
+    destVal = (origVal === defaultOrig) ? defaultDest : defaultOrig;
+  }
+
+  // 3. セレクトボックスの <option> 要素を生成
   sOrig.innerHTML = "";
   sDest.innerHTML = "";
 
@@ -639,10 +650,11 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
+  // 4. 値の設定
   sOrig.value = origVal;
   sDest.value = destVal;
 
-  // 描画の即時反映
+  // 5. ピンポイント分析・1都市分析の即時再描画
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
