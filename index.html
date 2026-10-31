@@ -927,11 +927,11 @@
 <div class="grid-2" style="margin-bottom: 10px">
   <div class="input-group">
     <span class="input-label">起点都市</span>
-    <select id="selectOrig" autocomplete="off" onchange="updatePairAnalysis(); if(typeof renderSingleCityAnalysis === 'function') renderSingleCityAnalysis();"></select>
+    <select id="selectOrig" autocomplete="off" onchange="saveSelectState(); updatePairAnalysis(); if(typeof renderSingleCityAnalysis === 'function') renderSingleCityAnalysis();"></select>
   </div>
   <div class="input-group">
     <span class="input-label">終点都市</span>
-    <select id="selectDest" autocomplete="off" onchange="updatePairAnalysis();"></select>
+    <select id="selectDest" autocomplete="off" onchange="saveSelectState(); updatePairAnalysis();"></select>
   </div>
 </div>
 
