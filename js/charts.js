@@ -408,7 +408,7 @@ function renderSingleCityAnalysis() {
   renderSingleCityBubbleChart(orig);
 }
 
-// ① 横向き積み上げ棒グラフ（フォント・バーの太さは固定 ＆ 領域全体の高さを都市数に連動）
+// ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域高さを都市数に応じて可変）
 function renderSingleCityBarChart(orig) {
   const canvas = document.getElementById("singleCityBarCanvas");
   if (!canvas) return;
@@ -417,23 +417,18 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  // --- 固定サイズ・余白のパラメータ設定 ---
-  const rowHeight = 24;     // 1行（1都市）の高さ(px)
-  const barHeight = 13;     // 棒の太さ(px)
-  const fontSize = 10;      // フォントサイズ(px)
-  const paddingTop = 10;    // 上余白(px)
-  const paddingBottom = 10; // 下余白(px)
-  const paddingLeft = 80;   // 都市名ラベルエリア(px)
-  const paddingRight = 40;  // 右側数値ラベルエリア(px)
+  const rowHeight = 24;     // 1行の高さ
+  const barHeight = 13;     // 棒の太さ
+  const fontSize = 10;      // フォントサイズ
+  const paddingTop = 10;
+  const paddingBottom = 10;
+  const paddingLeft = 80;   // 都市名エリア
+  const paddingRight = 40;  // 右側数値エリア
 
-  // 1. 親コンテナの横幅を「高さ変更前」に安全に取得
   const container = canvas.parentElement;
   const width = (container ? container.clientWidth : 0) || canvas.getBoundingClientRect().width || 300;
-
-  // 2. 都市数（行数）に合わせて全体に必要な高さを動的計算
   const calculatedHeight = destCities.length * rowHeight + paddingTop + paddingBottom;
 
-  // 3. 包んでいる親コンテナと Canvas の高さ（CSS/属性）を自動更新
   if (container) {
     container.style.height = calculatedHeight + "px";
   }
@@ -448,7 +443,6 @@ function renderSingleCityBarChart(orig) {
 
   const chartW = width - paddingLeft - paddingRight;
 
-  // 最大需要量の算出
   let maxDemand = 0;
   destCities.forEach((dest) => {
     const res = odResultsMatrix[orig] ? odResultsMatrix[orig][dest.name] : null;
@@ -456,12 +450,10 @@ function renderSingleCityBarChart(orig) {
   });
   if (maxDemand === 0) maxDemand = 1;
 
-  // Y軸都市名 ＆ 積み上げ棒グラフ描画
   destCities.forEach((dest, idx) => {
     const yCenter = paddingTop + (idx + 0.5) * rowHeight;
     const yTop = yCenter - barHeight / 2;
 
-    // Y軸都市名（固定サイズ）
     ctx.fillStyle = "#cccccc";
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "right";
@@ -480,7 +472,6 @@ function renderSingleCityBarChart(orig) {
       }
     });
 
-    // 右端の需要数値ラベル（固定サイズ）
     ctx.fillStyle = "#60a5fa";
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "left";
