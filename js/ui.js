@@ -653,10 +653,6 @@ function syncCitySelects() {
     return;
   }
 
-  // 2. <option> 選択肢をクリア＆再生成
-  sOrig.innerHTML = "";
-  sDest.innerHTML = "";
-
   cities.forEach((c) => {
     sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
