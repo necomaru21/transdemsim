@@ -1,7 +1,12 @@
+// 区間ピンポイント分析の更新処理
 function updatePairAnalysis() {
-  const orig = document.getElementById("selectOrig").value;
-  const dest = document.getElementById("selectDest").value;
+  const origSelect = document.getElementById("selectOrig");
+  const destSelect = document.getElementById("selectDest");
+  if (!origSelect || !destSelect) return;
 
+  const orig = origSelect.value;
+  const dest = destSelect.value;
+  
   const pMtotal = document.getElementById("pairMtotal");
   const pTeff = document.getElementById("pairTeff");
   const pBar = document.getElementById("pairShareBar");
@@ -63,6 +68,24 @@ function updatePairAnalysis() {
   if (typeof renderSingleCityAnalysis === "function") {
     renderSingleCityAnalysis();
   }
+}
+
+// 1都市選択時の分析描画（selectOrig を直接参照）
+function renderSingleCityAnalysis() {
+  const origSelect = document.getElementById("selectOrig");
+  if (!origSelect || !cities || cities.length === 0) return;
+
+  // 未選択時の安全ガード（初期選択値を確保）
+  let orig = origSelect.value;
+  if (!orig && cities[0]) {
+    orig = cities[0].name;
+    origSelect.value = orig;
+  }
+
+  if (!orig || !odResultsMatrix || !odResultsMatrix[orig]) return;
+
+  renderSingleCityBarChart(orig);
+  renderSingleCityBubbleChart(orig);
 }
 
 function renderOdFilterControls() {
@@ -400,19 +423,6 @@ function renderCrossSectionChart() {
         `;
   });
 }
-
-// 1都市選択時の分析描画（selectOrig を共用参照）
-function renderSingleCityAnalysis() {
-  const origSelect = document.getElementById("selectOrig");
-  if (!origSelect || !cities || cities.length === 0) return;
-
-  const orig = origSelect.value;
-  if (!orig || !odResultsMatrix || !odResultsMatrix[orig]) return;
-
-  renderSingleCityBarChart(orig);
-  renderSingleCityBubbleChart(orig);
-}
-
 
 // ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域高さを都市数に応じて可変）
 function renderSingleCityBarChart(orig) {
