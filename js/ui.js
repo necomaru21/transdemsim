@@ -623,40 +623,39 @@ function syncCityNames() {
   renderModeA();
 }
 
-// 見た目の変更を内部状態・Storage・描画へ即座に完全同期する関数
-function syncAndSaveSelects() {
-  saveSelectState(); // 1. 見た目の値を即座に localStorage に保存
-  if (typeof updatePairAnalysis === "function") {
-    updatePairAnalysis(); // 2. 内部値を使った描画・分析を即座に更新
-  }
+// ==========================================
+// 1. ユーザー操作時：選択値を保存して再描画
+// ==========================================
+function onSelectCityChange() {
+  const origVal = document.getElementById("selectOrig").value;
+  const destVal = document.getElementById("selectDest").value;
+
+  // localStorage へ即座に保存
+  if (origVal) localStorage.setItem("transdemsim_selectOrig", origVal);
+  if (destVal) localStorage.setItem("transdemsim_selectDest", destVal);
+
+  // 描画更新（charts.js の関数を直接呼ぶ）
+  updatePairAnalysis();
 }
 
-// 選択値を localStorage に保存する関数
-function saveSelectState() {
-  const sOrig = document.getElementById("selectOrig");
-  const sDest = document.getElementById("selectDest");
-  if (sOrig && sOrig.value) localStorage.setItem("transdemsim_selectOrig", sOrig.value);
-  if (sDest && sDest.value) localStorage.setItem("transdemsim_selectDest", sDest.value);
-}
-
+// ==========================================
+// 2. 初期化・データ更新時：DOMの同期と復元
+// ==========================================
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  if (!sOrig || !sDest) return;
 
-  // ① JSON読み込み等で都市データが存在しない（0件）場合
+  // 都市データが空の場合
   if (!cities || cities.length === 0) {
     sOrig.innerHTML = "";
     sDest.innerHTML = "";
-    sOrig.value = "";
-    sDest.value = ""; // 終点は null (空)
     localStorage.removeItem("transdemsim_selectOrig");
     localStorage.removeItem("transdemsim_selectDest");
-    if (typeof updatePairAnalysis === "function") updatePairAnalysis();
+    updatePairAnalysis();
     return;
   }
 
-  // ② 選択肢（<option>）を再生成
+  // <option> 選択肢の生成
   sOrig.innerHTML = "";
   sDest.innerHTML = "";
   cities.forEach((c) => {
@@ -664,26 +663,22 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  // ③ デフォルト値の定義
-  const defaultOrig = cities[0].name;
-  const defaultDest = cities[cities.length - 1].name;
-
-  // ④ 「内部保存値（Storage）」または「デフォルト値」から決定値を算出
+  // 復元する値の確定（Storage値 ＞ デフォルト値）
   const savedOrig = localStorage.getItem("transdemsim_selectOrig");
   const savedDest = localStorage.getItem("transdemsim_selectDest");
 
-  const targetOrig = (savedOrig && cities.some((c) => c.name === savedOrig)) ? savedOrig : defaultOrig;
-  const targetDest = (savedDest && cities.some((c) => c.name === savedDest)) ? savedDest : defaultDest;
+  const defaultOrig = cities[0].name;
+  const defaultDest = cities[cities.length - 1].name;
 
-  // ⑤ 決定した値を画面上の見た目（<select>.value）へ即座に反映
-  sOrig.value = targetOrig;
-  sDest.value = targetDest;
+  // リストに存在する値ならそれを設定、なければデフォルト
+  const hasCity = (name) => cities.some((c) => c.name === name);
+  sOrig.value = hasCity(savedOrig) ? savedOrig : defaultOrig;
+  sDest.value = hasCity(savedDest) ? savedDest : defaultDest;
 
-  // ⑥ 内部（Storage）と描画をその場で同期
-  saveSelectState();
-  if (typeof updatePairAnalysis === "function") {
-    updatePairAnalysis();
-  }
+  // 確定値を保存して描画
+  localStorage.setItem("transdemsim_selectOrig", sOrig.value);
+  localStorage.setItem("transdemsim_selectDest", sDest.value);
+  updatePairAnalysis();
 }
 
 let activeColorTargetModeIdx = null;
