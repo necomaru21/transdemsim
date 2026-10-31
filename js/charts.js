@@ -275,7 +275,7 @@ renderCrossSectionChart();
 }
 
 // 方向管理変数 ('up' または 'down')
-let currentDirection = 'up';
+let currentDirection = 'down';
 
 // 方向切り替え関数
 function switchDirection(dir) {
