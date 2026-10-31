@@ -44,7 +44,7 @@ function updatePairAnalysis() {
               <td class="text-right" style="color:#60a5fa; font-weight:bold;">${isNaN(m.demand) ? "NaN" : m.demand.toFixed(2)}</td>
               <td class="text-right" style="font-weight:bold;">${isNaN(m.share) ? "NaN" : m.share.toFixed(1)}%</td>
             </tr>
-          `;          
+          `;
 
       if (m.share > 0 && !isNaN(m.share)) {
         pBar.innerHTML += `<div class="share-segment" style="width:${m.share}%; background-color:${m.color};" title="${m.name}: ${m.share.toFixed(1)}%"></div>`;
@@ -393,7 +393,9 @@ function renderCrossSectionChart() {
             <span class="color-dot" style="background:${mA.color}"></span>
             <span style="color:#ccc;">${mA.name}</span>
           </div>
-        
+        `;
+  });
+}
 
 // 1都市選択時の分析描画エントリーポイント
 function renderSingleCityAnalysis() {
@@ -552,7 +554,5 @@ function renderSingleCityBubbleChart(orig) {
     ctx.font = "10px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(dest.name, x, y - radius - 2);
-  });
-}`;
   });
 }
