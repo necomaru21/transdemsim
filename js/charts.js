@@ -303,23 +303,31 @@ function renderBoardingAlightingChart() {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio || 300;
-  canvas.height = rect.height * window.devicePixelRatio || 180;
+  if (!cities || cities.length === 0) return;
+
+  // 1. スクロール用の最小横幅計算 (1都市あたり35px確保、最小でも親幅)
+  const parentWidth = canvas.parentElement.clientWidth || 300;
+  const minWidthPerCity = 35;
+  const calculatedWidth = Math.max(parentWidth, cities.length * minWidthPerCity);
+
+  const cssHeight = 200; // 高さ（縦書きラベル用に少し広め）
+  canvas.style.width = calculatedWidth + "px";
+  canvas.style.height = cssHeight + "px";
+
+  canvas.width = calculatedWidth * window.devicePixelRatio;
+  canvas.height = cssHeight * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-  const width = rect.width;
-  const height = rect.height;
+  const width = calculatedWidth;
+  const height = cssHeight;
 
   ctx.clearRect(0, 0, width, height);
 
-  if (!cities || cities.length === 0) return;
-
-  // 1. フィルタ有効なモードAの抽出
+  // 2. フィルタ有効なモードAの抽出
   let allActiveModeA = modeA.filter((m) => m.enabled);
   let activeModeA = allActiveModeA.filter((m) => !disabledChartModes.has(m.name));
 
-  // 2. 各都市の乗車数(boardings)・降車数(alightings)の集計 (方向条件付き)
+  // 3. 各都市の乗車数(boardings)・降車数(alightings)の集計
   let boardings = cities.map(() => 0);
   let alightings = cities.map(() => 0);
 
@@ -327,28 +335,26 @@ function renderBoardingAlightingChart() {
     for (let i = 0; i < cities.length; i++) {
       for (let j = 0; j < cities.length; j++) {
         if (i === j) continue;
-
-        // 方向判定: upなら i < j (上り), downなら i > j (下り)
-        const isTargetDir = currentDirection === 'up' ? (i < j) : (i > j);
+        const isTargetDir = currentDirection === 'down' ? (i < j) : (i > j);
         if (!isTargetDir) continue;
 
         const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
         if (res && res.modes && res.modes.length > 0) {
           const mMatch = res.modes.find((m) => m.name === mA.name);
           if (mMatch && typeof mMatch.demand === "number" && !isNaN(mMatch.demand)) {
-            boardings[i] += mMatch.demand;  // 起点都市 i で乗車
-            alightings[j] += mMatch.demand; // 終点都市 j で降車
+            boardings[i] += mMatch.demand;
+            alightings[j] += mMatch.demand;
           }
         }
       }
     }
   });
 
-  // 3. 描画エリアの設定
+  // 4. 描画エリアの設定 (縦書き用に paddingBottom を 60px に拡大)
   const paddingLeft = 35;
-  const paddingBottom = 30;
-  const paddingTop = 15;
-  const paddingRight = 10;
+  const paddingBottom = 60;
+  const paddingTop = 20;
+  const paddingRight = 15;
   const chartW = width - paddingLeft - paddingRight;
   const chartH = height - paddingTop - paddingBottom;
 
@@ -372,20 +378,37 @@ function renderBoardingAlightingChart() {
   ctx.fillText((maxVal / 2).toFixed(0), paddingLeft - 4, paddingTop + chartH / 2 + 3);
   ctx.fillText("0", paddingLeft - 4, height - paddingBottom);
 
-  // X軸目盛り・棒グラフの描画
+  // 凡例表示 (右上)
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#2b5c8f";
+  ctx.fillText("■ 乗車", width - paddingRight - 45, paddingTop - 4);
+  ctx.fillStyle = "#d9534f";
+  ctx.fillText("■ 降車", width - paddingRight, paddingTop - 4);
+
+  // X軸目盛り・棒グラフ・縦書き駅名の描画
   const numCities = cities.length;
   const stepX = chartW / numCities;
-  const barWidth = Math.min(stepX * 0.35, 12);
+  const barWidth = Math.min(stepX * 0.35, 10);
 
   cities.forEach((c, idx) => {
     const centerX = paddingLeft + (idx + 0.5) * stepX;
 
-    // X軸ラベル (都市名)
+    // ★ 縦書き駅名描画
     ctx.textAlign = "center";
-    ctx.fillStyle = "#888888";
-    ctx.fillText(c.name, centerX, height - paddingBottom + 14);
+    ctx.fillStyle = "#aaaaaa";
+    ctx.font = "10px sans-serif";
+    const nameStr = c.name || "";
+    const charHeight = 11;
+    for (let charIdx = 0; charIdx < nameStr.length; charIdx++) {
+      const char = nameStr[charIdx];
+      ctx.fillText(
+        char,
+        centerX,
+        height - paddingBottom + 12 + charIdx * charHeight
+      );
+    }
 
-    // 青棒: 乗車数 (左側)
+    // 青棒: 乗車数
     const bHeight = (boardings[idx] / maxVal) * chartH;
     ctx.fillStyle = "#2b5c8f";
     ctx.fillRect(
@@ -395,7 +418,7 @@ function renderBoardingAlightingChart() {
       bHeight
     );
 
-    // 赤棒: 降車数 (右側)
+    // 赤棒: 降車数
     const aHeight = (alightings[idx] / maxVal) * chartH;
     ctx.fillStyle = "#d9534f";
     ctx.fillRect(
@@ -411,13 +434,28 @@ function renderCrossSectionChart() {
   const canvas = document.getElementById("crossSectionCanvas");
   const ctx = canvas.getContext("2d");
 
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio || 300;
-  canvas.height = rect.height * window.devicePixelRatio || 180;
+  // スクロール用幅計算
+  const parentWidth = canvas.parentElement.clientWidth || 300;
+  const numSections = cities.length - 1;
+  const minWidthPerSec = 35;
+  const calculatedWidth = Math.max(parentWidth, numSections * minWidthPerSec);
+
+  const cssHeight = 200;
+  canvas.style.width = calculatedWidth + "px";
+  canvas.style.height = cssHeight + "px";
+
+  canvas.width = calculatedWidth * window.devicePixelRatio;
+  canvas.height = cssHeight * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-  const width = rect.width;
-  const height = rect.height;
+  const width = calculatedWidth;
+  const height = cssHeight;
+  
+  // paddingBottom を 60 に変更（縦書きスペース確保）
+  const paddingLeft = 35;
+  const paddingBottom = 60;
+  const paddingTop = 10;
+  const paddingRight = 15;
 
   ctx.clearRect(0, 0, width, height);
 
