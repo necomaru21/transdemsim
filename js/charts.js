@@ -779,3 +779,33 @@ function renderSingleCityBubbleChart(orig) {
     ctx.fillText(dest.name, x, y - radius - 2);
   });
 }
+
+// ==========================================
+// グラフ間の横スクロール位置同期処理
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+  setupChartScrollSync();
+});
+
+function setupChartScrollSync() {
+  const containers = document.querySelectorAll(".chart-scroll-sync");
+  let isSyncing = false;
+
+  containers.forEach((container) => {
+    container.addEventListener("scroll", (e) => {
+      if (isSyncing) return;
+      isSyncing = true;
+
+      const scrollLeft = e.target.scrollLeft;
+      containers.forEach((other) => {
+        if (other !== e.target) {
+          other.scrollLeft = scrollLeft;
+        }
+      });
+
+      requestAnimationFrame(() => {
+        isSyncing = false;
+      });
+    });
+  });
+}
