@@ -981,11 +981,11 @@
             <select id="selectSingleCity" onchange="renderSingleCityAnalysis()"></select>
           </div>
 
-<!-- 横向き積み上げ棒グラフ（高さの固定指定を完全に解除） -->
-<div style="font-size: 10px; color: #999; margin-bottom: 4px;">各目的地都市への需要量とモード別内訳</div>
-<div class="chart-container" style="height: auto !important; min-height: 100px; margin-top: 4px; margin-bottom: 16px;">
-  <canvas id="singleCityBarCanvas"></canvas>
-</div>
+          <!-- 横向き積み上げ棒グラフ -->
+          <div style="font-size: 10px; color: #999; margin-bottom: 4px;">各目的地都市への需要量とモード別内訳</div>
+          <div class="chart-container" style="height: 200px; margin-bottom: 16px;">
+            <canvas id="singleCityBarCanvas"></canvas>
+          </div>
   
           <!-- バブルチャート -->
           <div style="font-size: 10px; color: #999; margin-bottom: 4px;">目的地都市別の需要構造（横軸:時間距離, 縦軸:移動需要, 円サイズ:相手ポテンシャル）</div>
@@ -1238,7 +1238,6 @@
     <!-- 外部JavaScriptの読み込み -->
     <script src="js/config.js"></script>
     <script src="js/calc.js"></script>
-    <script src="js/charts.js"></script> <!-- ★ charts.js を ui.js の前に移動 -->
-    <script src="js/ui.js"></script>
+    <script src="js/charts.js"></script> <!-- ★ charts.js を ui.js の前に移動 --      <script src="js/ui.js"></script>
   </body>
 </html>
