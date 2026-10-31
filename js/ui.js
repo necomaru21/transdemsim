@@ -626,18 +626,28 @@ function syncCityNames() {
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  const origVal = sOrig.value || (cities[0] ? cities[0].name : "");
-  const destVal = sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "");
+  const sSingle = document.getElementById("selectSingleCity");
 
-  sOrig.innerHTML = "";
-  sDest.innerHTML = "";
+  const origVal = sOrig ? sOrig.value || (cities[0] ? cities[0].name : "") : "";
+  const destVal = sDest ? sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "") : "";
+  const singleVal = sSingle ? sSingle.value || (cities[0] ? cities[0].name : "") : "";
+
+  if (sOrig) sOrig.innerHTML = "";
+  if (sDest) sDest.innerHTML = "";
+  if (sSingle) sSingle.innerHTML = "";
+
   cities.forEach((c) => {
-    sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-    sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    if (sOrig) sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    if (sDest) sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    if (sSingle) sSingle.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  sOrig.value = origVal;
-  sDest.value = destVal;
+  if (sOrig) sOrig.value = origVal;
+  if (sDest) sDest.value = destVal;
+  if (sSingle) {
+    sSingle.value = singleVal;
+    renderSingleCityAnalysis();
+  }
 }
 
 function toggleDebug() {
