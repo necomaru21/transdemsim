@@ -1006,9 +1006,18 @@
             モードA（路線型）の区間ごとの通過需要を積み上げて表示（タップで表示トグル切り替え）
           </div>
 
-          <div class="chart-container">
-            <canvas id="crossSectionCanvas"></canvas>
-          </div>
+<!-- index.html の断面交通量エリア付近 -->
+<div class="chart-box">
+  <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 4px;">■ 各駅乗降客数</div>
+  <canvas id="boardingAlightingCanvas" style="width: 100%; height: 180px;"></canvas>
+</div>
+
+<!-- 既存の断面交通量 Canvas -->
+<div class="chart-box">
+  <div style="font-weight: bold; font-size: 0.9rem; margin-bottom: 4px;">■ 断面交通量</div>
+  <canvas id="crossSectionCanvas" style="width: 100%; height: 180px;"></canvas>
+</div>
+
           <div
             id="chartLegend"
             style="
