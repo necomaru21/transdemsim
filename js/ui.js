@@ -623,16 +623,20 @@ function syncCityNames() {
   renderModeA();
 }
 
+// 見た目の変更を内部状態・Storage・描画へ即座に完全同期する関数
+function syncAndSaveSelects() {
+  saveSelectState(); // 1. 見た目の値を即座に localStorage に保存
+  if (typeof updatePairAnalysis === "function") {
+    updatePairAnalysis(); // 2. 内部値を使った描画・分析を即座に更新
+  }
+}
+
 // 選択値を localStorage に保存する関数
 function saveSelectState() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  if (sOrig && sOrig.value) {
-    localStorage.setItem("transdemsim_selectOrig", sOrig.value);
-  }
-  if (sDest && sDest.value) {
-    localStorage.setItem("transdemsim_selectDest", sDest.value);
-  }
+  if (sOrig && sOrig.value) localStorage.setItem("transdemsim_selectOrig", sOrig.value);
+  if (sDest && sDest.value) localStorage.setItem("transdemsim_selectDest", sDest.value);
 }
 
 // セレクトボックスの同期・初期化処理
