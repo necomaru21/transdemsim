@@ -402,7 +402,9 @@ function renderSingleCityAnalysis() {
   const citySelect = document.getElementById("selectSingleCity");
   if (!citySelect) return;
   const orig = citySelect.value;
-  if (!orig || !odResultsMatrix[orig]) return;
+  
+  // データ未セット時は処理を安全にスキップ
+  if (!orig || !odResultsMatrix || !odResultsMatrix[orig]) return;
 
   renderSingleCityBarChart(orig);
   renderSingleCityBubbleChart(orig);
