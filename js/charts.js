@@ -408,7 +408,7 @@ function renderSingleCityAnalysis() {
   renderSingleCityBubbleChart(orig);
 }
 
-// ① 横向き積み上げ棒グラフ（フォント・バー・余白固定 ＆ 領域高さを動的可変）
+// ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域全体の高さを自動連動）
 function renderSingleCityBarChart(orig) {
   const canvas = document.getElementById("singleCityBarCanvas");
   if (!canvas) return;
@@ -417,31 +417,35 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  // --- サイズ・余白の固定パラメータ設定 ---
-  const rowHeight = 24;  // 1都市あたりの行高さ（固定）
-  const barHeight = 13;  // 棒グラフの太さ（固定）
-  const fontSize = 10;   // フォントサイズ（固定）
-  const paddingTop = 10; // 上部余白（固定）
-  const paddingBottom = 10; // 下部余白（固定）
-  const paddingLeft = 75; // 都市名エリア（固定）
-  const paddingRight = 35; // 数値ラベルエリア（固定）
+  // --- 固定サイズ・余白パラメータ ---
+  const rowHeight = 24;     // 1行の高さ(px)
+  const barHeight = 13;     // 棒の太さ(px)
+  const fontSize = 10;      // フォントサイズ(px)
+  const paddingTop = 10;    // 上余白(px)
+  const paddingBottom = 10; // 下余白(px)
+  const paddingLeft = 80;   // 都市名エリア(px)
+  const paddingRight = 40;  // 右側数値エリア(px)
 
-  // 都市数に合わせて全体に必要な高さを算出
+  // 都市数に応じて全体の高さを動的計算
   const calculatedHeight = destCities.length * rowHeight + paddingTop + paddingBottom;
 
-  // 親コンテナの横幅を取得し、Canvasの縦横サイズを可変更新
+  // 親コンテナ（.chart-container）および Canvas の高さを強制更新
+  const container = canvas.parentElement;
+  if (container) {
+    container.style.height = calculatedHeight + "px";
+  }
+
   const rect = canvas.getBoundingClientRect();
   const width = rect.width || 300;
-  
+
   canvas.width = width * window.devicePixelRatio;
   canvas.height = calculatedHeight * window.devicePixelRatio;
-  canvas.style.height = calculatedHeight + "px"; // 領域の高さ自体を動的に変更
+  canvas.style.height = calculatedHeight + "px";
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
   ctx.clearRect(0, 0, width, calculatedHeight);
 
   const chartW = width - paddingLeft - paddingRight;
-  const chartH = calculatedHeight - paddingTop - paddingBottom;
 
   // 最大需要量の算出
   let maxDemand = 0;
@@ -456,7 +460,7 @@ function renderSingleCityBarChart(orig) {
     const yCenter = paddingTop + (idx + 0.5) * rowHeight;
     const yTop = yCenter - barHeight / 2;
 
-    // Y軸都市名（固定フォント）
+    // 都市名
     ctx.fillStyle = "#cccccc";
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "right";
@@ -475,7 +479,7 @@ function renderSingleCityBarChart(orig) {
       }
     });
 
-    // 右端の需要数値（固定フォント）
+    // 右端数値ラベル
     ctx.fillStyle = "#60a5fa";
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "left";
