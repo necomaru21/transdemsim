@@ -60,7 +60,10 @@ function updatePairAnalysis() {
 
   if (pDebug) pDebug.innerText = debugLog;
   
-  renderSingleCityAnalysis();
+  // updatePairAnalysis 関数の末尾（if (pDebug) pDebug.innerText = debugLog; の直後）に追加
+  if (typeof renderSingleCityAnalysis === "function") {
+    renderSingleCityAnalysis();
+  }
 }
 
 function renderOdFilterControls() {
