@@ -430,17 +430,24 @@ function renderBoardingAlightingChart() {
   });
 }
 
+// ==========================================
+// 断面交通量グラフ描画 (横スクロール・縦書きラベル対応)
+// ==========================================
 function renderCrossSectionChart() {
   const canvas = document.getElementById("crossSectionCanvas");
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
-  // スクロール用幅計算
-  const parentWidth = canvas.parentElement.clientWidth || 300;
+  if (!cities || cities.length < 2) return;
+
   const numSections = cities.length - 1;
+
+  // 1. スクロール用の最小横幅計算 (1区間あたり35px確保、最小でも親幅)
+  const parentWidth = canvas.parentElement.clientWidth || 300;
   const minWidthPerSec = 35;
   const calculatedWidth = Math.max(parentWidth, numSections * minWidthPerSec);
 
-  const cssHeight = 200;
+  const cssHeight = 200; // 高さ (縦書きラベル用に確保)
   canvas.style.width = calculatedWidth + "px";
   canvas.style.height = cssHeight + "px";
 
@@ -450,18 +457,10 @@ function renderCrossSectionChart() {
 
   const width = calculatedWidth;
   const height = cssHeight;
-  
-  // paddingBottom を 60 に変更（縦書きスペース確保）
-  const paddingLeft = 35;
-  const paddingBottom = 60;
-  const paddingTop = 10;
-  const paddingRight = 15;
 
   ctx.clearRect(0, 0, width, height);
 
-  if (cities.length < 2) return;
-
-  const numSections = cities.length - 1;
+  // 区間リストの作成
   let sections = [];
   for (let s = 0; s < numSections; s++) {
     sections.push({
@@ -471,9 +470,11 @@ function renderCrossSectionChart() {
     });
   }
 
+  // 2. フィルタ有効なモードAの抽出
   let allActiveModeA = modeA.filter((m) => m.enabled);
   let activeModeA = allActiveModeA.filter((m) => !disabledChartModes.has(m.name));
 
+  // 3. 各区間の通過需要集計
   let sectionData = sections.map(() => ({}));
 
   activeModeA.forEach((mA) => {
@@ -501,6 +502,7 @@ function renderCrossSectionChart() {
     });
   });
 
+  // 4. 積み上げデータの計算
   let maxStack = 0;
   let stackedData = sections.map((sec, sIdx) => {
     let currentHeight = 0;
@@ -516,13 +518,15 @@ function renderCrossSectionChart() {
 
   if (maxStack === 0) maxStack = 1;
 
+  // 5. 描画エリアの設定 (縦書き用に paddingBottom を 60px に拡大)
   const paddingLeft = 35;
-  const paddingBottom = 30;
+  const paddingBottom = 60;
   const paddingTop = 10;
-  const paddingRight = 10;
+  const paddingRight = 15;
   const chartW = width - paddingLeft - paddingRight;
   const chartH = height - paddingTop - paddingBottom;
 
+  // Y軸・枠線
   ctx.strokeStyle = "#333333";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -531,6 +535,7 @@ function renderCrossSectionChart() {
   ctx.lineTo(width - paddingRight, height - paddingBottom);
   ctx.stroke();
 
+  // Y軸目盛り
   ctx.fillStyle = "#888888";
   ctx.font = "9px sans-serif";
   ctx.textAlign = "right";
@@ -540,12 +545,25 @@ function renderCrossSectionChart() {
 
   const stepX = chartW / numSections;
 
+  // X軸ラベル (縦書き描画)
   ctx.textAlign = "center";
+  ctx.fillStyle = "#aaaaaa";
+  ctx.font = "10px sans-serif";
+  const charHeight = 11;
+
   sections.forEach((sec, idx) => {
     const x = paddingLeft + (idx + 0.5) * stepX;
-    ctx.fillText(sec.label, x, height - paddingBottom + 14);
+    const nameStr = sec.label || "";
+    for (let charIdx = 0; charIdx < nameStr.length; charIdx++) {
+      ctx.fillText(
+        nameStr[charIdx],
+        x,
+        height - paddingBottom + 12 + charIdx * charHeight
+      );
+    }
   });
 
+  // 積み上げ面グラフの描画
   activeModeA.forEach((mA) => {
     ctx.fillStyle = mA.color + "bb";
     ctx.strokeStyle = mA.color;
@@ -571,29 +589,32 @@ function renderCrossSectionChart() {
     ctx.stroke();
   });
 
+  // 凡例の更新
   const legendDiv = document.getElementById("chartLegend");
-  legendDiv.innerHTML = "";
+  if (legendDiv) {
+    legendDiv.innerHTML = "";
 
-  const totalOpacity = isChartTotalMode ? "1.0" : "0.4";
-  const totalDecoration = isChartTotalMode ? "none" : "line-through";
-  legendDiv.innerHTML += `
-        <div style="display:flex; align-items:center; cursor:pointer; opacity:${totalOpacity}; text-decoration:${totalDecoration}; font-weight:bold; color:#60a5fa; user-select:none;" onclick="toggleChartMode('total')">
-          <span>■ 全表示</span>
+    const totalOpacity = isChartTotalMode ? "1.0" : "0.4";
+    const totalDecoration = isChartTotalMode ? "none" : "line-through";
+    legendDiv.innerHTML += `
+      <div style="display:flex; align-items:center; cursor:pointer; opacity:${totalOpacity}; text-decoration:${totalDecoration}; font-weight:bold; color:#60a5fa; user-select:none;" onclick="toggleChartMode('total')">
+        <span>■ 全表示</span>
+      </div>
+    `;
+
+    allActiveModeA.forEach((mA) => {
+      const isDisabled = !isChartTotalMode && disabledChartModes.has(mA.name);
+      const opacity = isChartTotalMode ? "1.0" : !isDisabled ? "1.0" : "0.4";
+      const textDecoration = isChartTotalMode ? "none" : !isDisabled ? "none" : "line-through";
+
+      legendDiv.innerHTML += `
+        <div style="display:flex; align-items:center; cursor:pointer; opacity:${opacity}; text-decoration:${textDecoration}; transition:all 0.15s ease; user-select:none;" onclick="toggleChartMode('${mA.name}')">
+          <span class="color-dot" style="background:${mA.color}"></span>
+          <span style="color:#ccc;">${mA.name}</span>
         </div>
       `;
-
-  allActiveModeA.forEach((mA) => {
-    const isDisabled = !isChartTotalMode && disabledChartModes.has(mA.name);
-    const opacity = isChartTotalMode ? "1.0" : !isDisabled ? "1.0" : "0.4";
-    const textDecoration = isChartTotalMode ? "none" : !isDisabled ? "none" : "line-through";
-
-    legendDiv.innerHTML += `
-          <div style="display:flex; align-items:center; cursor:pointer; opacity:${opacity}; text-decoration:${textDecoration}; transition:all 0.15s ease; user-select:none;" onclick="toggleChartMode('${mA.name}')">
-            <span class="color-dot" style="background:${mA.color}"></span>
-            <span style="color:#ccc;">${mA.name}</span>
-          </div>
-        `;
-  });
+    });
+  }
 }
 
 // ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域高さを都市数に応じて可変）
