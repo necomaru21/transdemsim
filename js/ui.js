@@ -630,9 +630,7 @@ function onSelectCityChange() {
   const origVal = document.getElementById("selectOrig").value;
   const destVal = document.getElementById("selectDest").value;
 
-  // localStorage へ即座に保存
-  if (origVal) localStorage.setItem("transdemsim_selectOrig", origVal);
-  if (destVal) localStorage.setItem("transdemsim_selectDest", destVal);
+saveToLocalStorage();
 
   // 描画更新（charts.js の関数を直接呼ぶ）
   updatePairAnalysis();
