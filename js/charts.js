@@ -396,3 +396,163 @@ function renderCrossSectionChart() {
         `;
   });
 }
+
+// 1都市選択時の分析描画エントリーポイント
+function renderSingleCityAnalysis() {
+  const citySelect = document.getElementById("selectSingleCity");
+  if (!citySelect) return;
+  const orig = citySelect.value;
+  if (!orig || !odResultsMatrix[orig]) return;
+
+  renderSingleCityBarChart(orig);
+  renderSingleCityBubbleChart(orig);
+}
+
+// ① 横向き積み上げ棒グラフ（都市別需要 ＆ モード内訳）
+function renderSingleCityBarChart(orig) {
+  const canvas = document.getElementById("singleCityBarCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio || 300;
+  canvas.height = rect.height * window.devicePixelRatio || 200;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const width = rect.width;
+  const height = rect.height;
+  ctx.clearRect(0, 0, width, height);
+
+  const destCities = cities.filter((c) => c.name !== orig);
+  if (destCities.length === 0) return;
+
+  const paddingLeft = 60;
+  const paddingBottom = 20;
+  const paddingTop = 10;
+  const paddingRight = 15;
+  const chartW = width - paddingLeft - paddingRight;
+  const chartH = height - paddingTop - paddingBottom;
+
+  // 最大需要量の算出
+  let maxDemand = 0;
+  destCities.forEach((dest) => {
+    const res = odResultsMatrix[orig][dest.name];
+    if (res && res.Mtotal > maxDemand) maxDemand = res.Mtotal;
+  });
+  if (maxDemand === 0) maxDemand = 1;
+
+  const barHeight = Math.min(24, (chartH / destCities.length) * 0.65);
+  const rowStep = chartH / destCities.length;
+
+  // Y軸都市名 ＆ 棒グラフ描画
+  destCities.forEach((dest, idx) => {
+    const yCenter = paddingTop + (idx + 0.5) * rowStep;
+    const yTop = yCenter - barHeight / 2;
+
+    ctx.fillStyle = "#aaa";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(dest.name, paddingLeft - 6, yCenter + 3);
+
+    const res = odResultsMatrix[orig][dest.name];
+    if (!res || !res.modes || res.modes.length === 0) return;
+
+    let currentX = paddingLeft;
+    res.modes.forEach((m) => {
+      const segW = (m.demand / maxDemand) * chartW;
+      if (segW > 0) {
+        ctx.fillStyle = m.color;
+        ctx.fillRect(currentX, yTop, segW, barHeight);
+        currentX += segW;
+      }
+    });
+
+    // 数値ラベル
+    ctx.fillStyle = "#60a5fa";
+    ctx.font = "9px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(res.Mtotal.toFixed(1), currentX + 4, yCenter + 3);
+  });
+}
+
+// ② バブルチャート（横軸:時間距離Teff, 縦軸:需要Mtotal, バブルサイズ:相手都市ポテンシャル）
+function renderSingleCityBubbleChart(orig) {
+  const canvas = document.getElementById("singleCityBubbleCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio || 300;
+  canvas.height = rect.height * window.devicePixelRatio || 220;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const width = rect.width;
+  const height = rect.height;
+  ctx.clearRect(0, 0, width, height);
+
+  const destCities = cities.filter((c) => c.name !== orig);
+  if (destCities.length === 0) return;
+
+  const paddingLeft = 40;
+  const paddingBottom = 30;
+  const paddingTop = 15;
+  const paddingRight = 20;
+  const chartW = width - paddingLeft - paddingRight;
+  const chartH = height - paddingTop - paddingBottom;
+
+  let maxTeff = 0;
+  let maxMtotal = 0;
+  let maxP = 0;
+
+  destCities.forEach((dest) => {
+    const res = odResultsMatrix[orig][dest.name];
+    if (res) {
+      if (res.Teff < 900 && res.Teff > maxTeff) maxTeff = res.Teff;
+      if (res.Mtotal > maxMtotal) maxMtotal = res.Mtotal;
+    }
+    if (dest.p > maxP) maxP = dest.p;
+  });
+
+  if (maxTeff === 0) maxTeff = 300;
+  if (maxMtotal === 0) maxMtotal = 100;
+  if (maxP === 0) maxP = 100;
+
+  // 軸線の描画
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingLeft, paddingTop);
+  ctx.lineTo(paddingLeft, height - paddingBottom);
+  ctx.lineTo(width - paddingRight, height - paddingBottom);
+  ctx.stroke();
+
+  // 軸ラベル
+  ctx.fillStyle = "#888";
+  ctx.font = "9px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("時間距離 Teff (分)", paddingLeft + chartW / 2, height - 6);
+
+  // バブル描画
+  destCities.forEach((dest) => {
+    const res = odResultsMatrix[orig][dest.name];
+    if (!res || res.Teff >= 900) return;
+
+    const x = paddingLeft + (res.Teff / maxTeff) * chartW;
+    const y = height - paddingBottom - (res.Mtotal / maxMtotal) * chartH;
+    const radius = Math.max(4, Math.min(20, (dest.p / maxP) * 18));
+
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
+    ctx.fill();
+    ctx.strokeStyle = "#60a5fa";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 都市名テキスト
+    ctx.fillStyle = "#fff";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(dest.name, x, y - radius - 2);
+  });
+}
