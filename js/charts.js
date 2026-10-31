@@ -59,6 +59,8 @@ function updatePairAnalysis() {
   debugLog += `・M_total: ${res.Mtotal}\n`;
 
   if (pDebug) pDebug.innerText = debugLog;
+  
+  renderSingleCityAnalysis();
 }
 
 function renderOdFilterControls() {
@@ -397,23 +399,18 @@ function renderCrossSectionChart() {
   });
 }
 
-// 1都市選択時の分析描画エントリーポイント（初期化・計算時も確実に実行するガード付き）
+// 1都市選択時の分析描画（selectOrig を共用参照）
 function renderSingleCityAnalysis() {
-  const citySelect = document.getElementById("selectSingleCity");
-  if (!citySelect || !cities || cities.length === 0) return;
+  const origSelect = document.getElementById("selectOrig");
+  if (!origSelect || !cities || cities.length === 0) return;
 
-  // セレクトボックスが未選択の場合は1番目の都市を補填
-  let orig = citySelect.value;
-  if (!orig && cities[0]) {
-    orig = cities[0].name;
-    citySelect.value = orig;
-  }
-
+  const orig = origSelect.value;
   if (!orig || !odResultsMatrix || !odResultsMatrix[orig]) return;
 
   renderSingleCityBarChart(orig);
   renderSingleCityBubbleChart(orig);
 }
+
 
 // ① 横向き積み上げ棒グラフ（フォント・バー固定 ＆ 領域高さを都市数に応じて可変）
 function renderSingleCityBarChart(orig) {
