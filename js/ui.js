@@ -628,15 +628,14 @@ function syncCitySelects() {
   const sDest = document.getElementById("selectDest");
   if (!sOrig || !sDest || !cities || cities.length === 0) return;
 
-  // デフォルト値（起点：一番上、終点：一番下）
   const defaultOrig = cities[0].name;
   const defaultDest = cities[cities.length - 1].name;
 
-  // 1. DOM上の現在の選択値を取得（JSON読み込み後など未選択時は null/空文字）
+  // 1. 再生成前の現在選択値を取得
   const currentOrig = sOrig.value;
   const currentDest = sDest.value;
 
-  // 2. <option> 選択肢をクリア＆再生成
+  // 2. <option> を再生成
   sOrig.innerHTML = "";
   sDest.innerHTML = "";
 
@@ -645,23 +644,21 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  // 3. 起点都市の決定
-  // 既存の値があり、かつ現在の都市リスト内に存在する場合のみ値を維持。それ以外（null/空/存在しない都市）は一番上
+  // 3. 起点都市の確定（有効な都市名が残っていれば維持、それ以外はデフォルト一番上）
   if (currentOrig && cities.some((c) => c.name === currentOrig)) {
     sOrig.value = currentOrig;
   } else {
     sOrig.value = defaultOrig;
   }
 
-  // 4. 終点都市の決定
-  // 既存の値があり、かつ現在の都市リスト内に存在する場合のみ値を維持。それ以外（null/空/存在しない都市）は一番下
+  // 4. 終点都市の確定（有効な都市名が残っていれば維持、それ以外はデフォルト一番下）
   if (currentDest && cities.some((c) => c.name === currentDest)) {
     sDest.value = currentDest;
   } else {
     sDest.value = defaultDest;
   }
 
-  // 5. 描画処理の呼び出し
+  // 5. 描画更新
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
