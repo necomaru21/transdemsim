@@ -923,17 +923,17 @@
           <div style="font-size: 11px; font-weight: bold; color: #cccccc; margin-bottom: 6px">
             1. 区間ピンポイント分析 ＆ 起点都市需要構造分析
           </div>
-          <div class="grid-2" style="margin-bottom: 10px">
-            <div class="input-group">
-              <span class="input-label">起点都市</span>
-<!-- 修正前: onchange="updatePairAnalysis()" などを確認 -->
-<select id="selectOrig" onchange="updatePairAnalysis(); if(typeof renderSingleCityAnalysis === 'function') renderSingleCityAnalysis();"></select>
-            </div>
-            <div class="input-group">
-              <span class="input-label">終点都市</span>
-              <select id="selectDest" onchange="updatePairAnalysis()"></select>
-            </div>
-          </div>
+          <!-- 起点都市・終点都市セレクトボックス -->
+<div class="grid-2" style="margin-bottom: 10px">
+  <div class="input-group">
+    <span class="input-label">起点都市</span>
+    <select id="selectOrig" onchange="updatePairAnalysis(); if(typeof renderSingleCityAnalysis === 'function') renderSingleCityAnalysis();"></select>
+  </div>
+  <div class="input-group">
+    <span class="input-label">終点都市</span>
+    <select id="selectDest" onchange="updatePairAnalysis();"></select>
+  </div>
+</div>
 
           <div class="summary-grid">
             <div class="summary-card">
