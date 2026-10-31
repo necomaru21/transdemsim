@@ -628,15 +628,15 @@ function syncCitySelects() {
   const sDest = document.getElementById("selectDest");
   if (!sOrig || !sDest || !cities || cities.length === 0) return;
 
-  // 1. 都市リストの「一番上（先頭）」と「一番下（末尾）」を取得
-  const firstCity = cities[0].name;
-  const lastCity = cities[cities.length - 1].name;
+  // デフォルト値（起点：一番上、終点：一番下）
+  const defaultOrig = cities[0].name;
+  const defaultDest = cities[cities.length - 1].name;
 
-  // 2. 現在のDOM要素の値を確認（値が存在しなければ null）
-  const currentOrig = sOrig.value || null;
-  const currentDest = sDest.value || null;
+  // 1. DOM上の現在の選択値を取得（JSON読み込み後など未選択時は null/空文字）
+  const currentOrig = sOrig.value;
+  const currentDest = sDest.value;
 
-  // 3. 選択肢 HTML (<option>) をクリア＆再生成
+  // 2. <option> 選択肢をクリア＆再生成
   sOrig.innerHTML = "";
   sDest.innerHTML = "";
 
@@ -645,21 +645,23 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  // 4. 起点都市の設定（既存の選択値が有効ならそれを保持、null/空なら一番上）
+  // 3. 起点都市の決定
+  // 既存の値があり、かつ現在の都市リスト内に存在する場合のみ値を維持。それ以外（null/空/存在しない都市）は一番上
   if (currentOrig && cities.some((c) => c.name === currentOrig)) {
     sOrig.value = currentOrig;
   } else {
-    sOrig.value = firstCity;
+    sOrig.value = defaultOrig;
   }
 
-  // 5. 終点都市の設定（既存の選択値が有効ならそれを保持、null/空なら一番下）
+  // 4. 終点都市の決定
+  // 既存の値があり、かつ現在の都市リスト内に存在する場合のみ値を維持。それ以外（null/空/存在しない都市）は一番下
   if (currentDest && cities.some((c) => c.name === currentDest)) {
     sDest.value = currentDest;
   } else {
-    sDest.value = lastCity;
+    sDest.value = defaultDest;
   }
 
-  // 6. ピンポイント分析・1都市分析の即時描画を実行
+  // 5. 描画処理の呼び出し
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
