@@ -623,19 +623,42 @@ function syncCityNames() {
   renderModeA();
 }
 
+// 選択値を localStorage に保存する関数
+function saveSelectState() {
+  const sOrig = document.getElementById("selectOrig");
+  const sDest = document.getElementById("selectDest");
+  if (sOrig) localStorage.setItem("transdemsim_selectOrig", sOrig.value);
+  if (sDest) localStorage.setItem("transdemsim_selectDest", sDest.value);
+}
+
+// セレクトボックスの同期・初期化処理
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  if (!sOrig || !sDest || !cities || cities.length === 0) return;
+  if (!sOrig || !sDest) return;
 
+  // 1. JSON等で都市データが全く存在しない場合の対応
+  if (!cities || cities.length === 0) {
+    sOrig.innerHTML = "";
+    sDest.innerHTML = "";
+    sOrig.value = "";
+    sDest.value = ""; // 終点は null (空)
+    if (typeof updatePairAnalysis === "function") updatePairAnalysis();
+    return;
+  }
+
+  // デフォルト値の準備（始点：先頭都市、終点：末尾都市）
   const defaultOrig = cities[0].name;
   const defaultDest = cities[cities.length - 1].name;
 
-  // 1. 再生成前の現在選択値を取得
-  const currentOrig = sOrig.value;
-  const currentDest = sDest.value;
+  // 2. 現在のDOM要素の値、または localStorage に保存された値を優先取得
+  const savedOrig = localStorage.getItem("transdemsim_selectOrig");
+  const savedDest = localStorage.getItem("transdemsim_selectDest");
 
-  // 2. <option> を再生成
+  const currentOrig = sOrig.value || savedOrig;
+  const currentDest = sDest.value || savedDest;
+
+  // 3. <option> 選択肢を再生成
   sOrig.innerHTML = "";
   sDest.innerHTML = "";
 
@@ -644,21 +667,24 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  // 3. 起点都市の確定（有効な都市名が残っていれば維持、それ以外はデフォルト一番上）
+  // 4. 起点都市の確定（既存・保存値が有効なら保持、なければ先頭都市）
   if (currentOrig && cities.some((c) => c.name === currentOrig)) {
     sOrig.value = currentOrig;
   } else {
     sOrig.value = defaultOrig;
   }
 
-  // 4. 終点都市の確定（有効な都市名が残っていれば維持、それ以外はデフォルト一番下）
+  // 5. 終点都市の確定（既存・保存値が有効なら保持、なければ末尾都市）
   if (currentDest && cities.some((c) => c.name === currentDest)) {
     sDest.value = currentDest;
   } else {
     sDest.value = defaultDest;
   }
 
-  // 5. 描画更新
+  // 決定した状態を localStorage へ保存
+  saveSelectState();
+
+  // 6. 描画処理の呼び出し
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
