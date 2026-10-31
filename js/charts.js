@@ -494,7 +494,7 @@ function renderSingleCityBubbleChart(orig) {
 
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * window.devicePixelRatio || 300;
-  canvas.height = rect.height * window.devicePixelRatio || 220;
+  canvas.height = rect.height * window.devicePixelRatio || 300;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
   const width = rect.width;
