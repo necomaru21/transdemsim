@@ -506,7 +506,7 @@ function renderSingleCityBubbleChart(orig) {
 
   const paddingLeft = 40;
   const paddingBottom = 30;
-  const paddingTop = 15;
+  const paddingTop = 35;
   const paddingRight = 20;
   const chartW = width - paddingLeft - paddingRight;
   const chartH = height - paddingTop - paddingBottom;
