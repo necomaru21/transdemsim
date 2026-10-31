@@ -1112,6 +1112,18 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("keydown", function (e) {
+  // Escキーでモーダルを閉じる
+  if (e.key === "Escape") {
+    const matrixModal = document.getElementById("matrixModal");
+    const colorPaletteModal = document.getElementById("colorPaletteModal");
+    if (matrixModal && !matrixModal.classList.contains("hidden")) {
+      closeMatrixModal();
+    }
+    if (colorPaletteModal && !colorPaletteModal.classList.contains("hidden")) {
+      closeColorPaletteModal();
+    }
+  }
+
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
     if (e.shiftKey) {
       redo();
