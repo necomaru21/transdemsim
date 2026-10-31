@@ -397,12 +397,19 @@ function renderCrossSectionChart() {
   });
 }
 
-// 1都市選択時の分析描画エントリーポイント
+// 1都市選択時の分析描画エントリーポイント（初期化・計算時も確実に実行するガード付き）
 function renderSingleCityAnalysis() {
   const citySelect = document.getElementById("selectSingleCity");
-  if (!citySelect) return;
-  const orig = citySelect.value;
-  if (!orig || !odResultsMatrix[orig]) return;
+  if (!citySelect || !cities || cities.length === 0) return;
+
+  // セレクトボックスが未選択の場合は1番目の都市を補填
+  let orig = citySelect.value;
+  if (!orig && cities[0]) {
+    orig = cities[0].name;
+    citySelect.value = orig;
+  }
+
+  if (!orig || !odResultsMatrix || !odResultsMatrix[orig]) return;
 
   renderSingleCityBarChart(orig);
   renderSingleCityBubbleChart(orig);
@@ -417,13 +424,13 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  const rowHeight = 24;     // 1行の高さ
-  const barHeight = 13;     // 棒の太さ
-  const fontSize = 10;      // フォントサイズ
-  const paddingTop = 10;
-  const paddingBottom = 10;
-  const paddingLeft = 80;   // 都市名エリア
-  const paddingRight = 40;  // 右側数値エリア
+  const rowHeight = 24;     // 1行の高さ(px)
+  const barHeight = 13;     // 棒の太さ(px)
+  const fontSize = 10;      // フォントサイズ(px)
+  const paddingTop = 10;    // 上余白(px)
+  const paddingBottom = 10; // 下余白(px)
+  const paddingLeft = 80;   // 都市名エリア(px)
+  const paddingRight = 40;  // 右側数値エリア(px)
 
   const container = canvas.parentElement;
   const width = (container ? container.clientWidth : 0) || canvas.getBoundingClientRect().width || 300;
