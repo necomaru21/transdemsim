@@ -424,13 +424,13 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  const rowHeight = 12;     // 1行の高さ(px)
-  const barHeight = 10;     // 棒の太さ(px)
-  const fontSize = 8;      // フォントサイズ(px)
-  const paddingTop = 5;    // 上余白(px)
-  const paddingBottom = 5; // 下余白(px)
-  const paddingLeft = 64;   // 都市名エリア(px)
-  const paddingRight = 32;  // 右側数値エリア(px)
+  const rowHeight =24;     // 1行の高さ(px)
+  const barHeight = 13;     // 棒の太さ(px)
+  const fontSize = 10;      // フォントサイズ(px)
+  const paddingTop = 10;    // 上余白(px)
+  const paddingBottom = 10; // 下余白(px)
+  const paddingLeft = 80;   // 都市名エリア(px)
+  const paddingRight = 40;  // 右側数値エリア(px)
 
   const container = canvas.parentElement;
   const width = (container ? container.clientWidth : 0) || canvas.getBoundingClientRect().width || 300;
