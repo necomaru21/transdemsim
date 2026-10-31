@@ -641,7 +641,7 @@ function syncCitySelects() {
   const sDest = document.getElementById("selectDest");
   if (!sOrig || !sDest) return;
 
-  // 1. JSON読み込み等で都市データが存在しない（0件）場合
+  // 1. JSON等で都市データが空（0件）の場合
   if (!cities || cities.length === 0) {
     sOrig.innerHTML = "";
     sDest.innerHTML = "";
@@ -653,41 +653,49 @@ function syncCitySelects() {
     return;
   }
 
-  // 2. <option> 選択肢をクリア＆再生成
-  sOrig.innerHTML = "";
-  sDest.innerHTML = "";
+  // <option> が未生成（初回ロード時やJSON読み込み直後）の場合のみ <option> を生成
+  if (sOrig.children.length === 0) {
+    sOrig.innerHTML = "";
+    sDest.innerHTML = "";
+    cities.forEach((c) => {
+      sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+      sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    });
+  }
 
-  cities.forEach((c) => {
-    sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-    sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-  });
-
-  // 3. デフォルト値の定義（始点：先頭都市、終点：末尾都市）
   const defaultOrig = cities[0].name;
   const defaultDest = cities[cities.length - 1].name;
 
-  // 4. localStorage に保存されている値を最優先で取得
-  const savedOrig = localStorage.getItem("transdemsim_selectOrig");
-  const savedDest = localStorage.getItem("transdemsim_selectDest");
+  // --- ★ 判定：入力値が null/空、または都市リストに存在しない時だけ書き換える ---
 
-  // 起点都市の確定：保存された都市が現在のリストに存在すれば復元、なければデフォルト(先頭)
-  if (savedOrig && cities.some((c) => c.name === savedOrig)) {
-    sOrig.value = savedOrig;
-  } else {
-    sOrig.value = defaultOrig;
+  // 起点都市のチェック
+  const origValid = sOrig.value && cities.some((c) => c.name === sOrig.value);
+  if (!origValid) {
+    // 保存値があればそれを試し、無ければデフォルト(先頭)をセット
+    const savedOrig = localStorage.getItem("transdemsim_selectOrig");
+    if (savedOrig && cities.some((c) => c.name === savedOrig)) {
+      sOrig.value = savedOrig;
+    } else {
+      sOrig.value = defaultOrig;
+    }
   }
 
-  // 終点都市の確定：保存された都市が現在のリストに存在すれば復元、なければデフォルト(末尾)
-  if (savedDest && cities.some((c) => c.name === savedDest)) {
-    sDest.value = savedDest;
-  } else {
-    sDest.value = defaultDest;
+  // 終点都市のチェック
+  const destValid = sDest.value && cities.some((c) => c.name === sDest.value);
+  if (!destValid) {
+    // 保存値があればそれを試し、無ければデフォルト(末尾)をセット
+    const savedDest = localStorage.getItem("transdemsim_selectDest");
+    if (savedDest && cities.some((c) => c.name === savedDest)) {
+      sDest.value = savedDest;
+    } else {
+      sDest.value = defaultDest;
+    }
   }
 
-  // 現在の確定値を Storage に同期保存
+  // 最新の選択状態を Storage に保存
   saveSelectState();
 
-  // 5. 描画処理の呼び出し
+  // 描画実行
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
