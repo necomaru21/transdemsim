@@ -626,21 +626,23 @@ function syncCityNames() {
 function syncCitySelects() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
+  if (!sOrig || !sDest) return;
 
-  const origVal = sOrig ? sOrig.value || (cities[0] ? cities[0].name : "") : "";
-  const destVal = sDest ? sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "") : "";
+  const origVal = sOrig.value || (cities[0] ? cities[0].name : "");
+  const destVal = sDest.value || (cities[2] ? cities[2].name : cities[1] ? cities[1].name : "");
 
-  if (sOrig) sOrig.innerHTML = "";
-  if (sDest) sDest.innerHTML = "";
+  sOrig.innerHTML = "";
+  sDest.innerHTML = "";
 
   cities.forEach((c) => {
-    if (sOrig) sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-    if (sDest) sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    sOrig.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+    sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  if (sOrig) sOrig.value = origVal;
-  if (sDest) sDest.value = destVal;
+  sOrig.value = origVal;
+  sDest.value = destVal;
 
+  // 描画の即時反映
   if (typeof updatePairAnalysis === "function") {
     updatePairAnalysis();
   }
