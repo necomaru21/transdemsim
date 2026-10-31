@@ -136,6 +136,7 @@ function calculate() {
               name: mA.name,
               type: "A",
               inVehicleTime: inVehicleTime,
+              freq: minFreq, // ★ 追加: 運行頻度(本/h)
               Tk: Tk,
               color: mA.color,
             });
