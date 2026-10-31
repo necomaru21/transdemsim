@@ -408,53 +408,61 @@ function renderSingleCityAnalysis() {
   renderSingleCityBubbleChart(orig);
 }
 
-// ① 横向き積み上げ棒グラフ（都市別需要 ＆ モード内訳）
+// ① 横向き積み上げ棒グラフ（フォント・バー・余白固定 ＆ 領域高さを動的可変）
 function renderSingleCityBarChart(orig) {
   const canvas = document.getElementById("singleCityBarCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * window.devicePixelRatio || 300;
-  canvas.height = rect.height * window.devicePixelRatio || 200;
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-  const width = rect.width;
-  const height = rect.height;
-  ctx.clearRect(0, 0, width, height);
-
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  const paddingLeft = 60;
-  const paddingBottom = 20;
-  const paddingTop = 10;
-  const paddingRight = 15;
+  // --- サイズ・余白の固定パラメータ設定 ---
+  const rowHeight = 24;  // 1都市あたりの行高さ（固定）
+  const barHeight = 13;  // 棒グラフの太さ（固定）
+  const fontSize = 10;   // フォントサイズ（固定）
+  const paddingTop = 10; // 上部余白（固定）
+  const paddingBottom = 10; // 下部余白（固定）
+  const paddingLeft = 75; // 都市名エリア（固定）
+  const paddingRight = 35; // 数値ラベルエリア（固定）
+
+  // 都市数に合わせて全体に必要な高さを算出
+  const calculatedHeight = destCities.length * rowHeight + paddingTop + paddingBottom;
+
+  // 親コンテナの横幅を取得し、Canvasの縦横サイズを可変更新
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width || 300;
+  
+  canvas.width = width * window.devicePixelRatio;
+  canvas.height = calculatedHeight * window.devicePixelRatio;
+  canvas.style.height = calculatedHeight + "px"; // 領域の高さ自体を動的に変更
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  ctx.clearRect(0, 0, width, calculatedHeight);
+
   const chartW = width - paddingLeft - paddingRight;
-  const chartH = height - paddingTop - paddingBottom;
+  const chartH = calculatedHeight - paddingTop - paddingBottom;
 
   // 最大需要量の算出
   let maxDemand = 0;
   destCities.forEach((dest) => {
-    const res = odResultsMatrix[orig][dest.name];
+    const res = odResultsMatrix[orig] ? odResultsMatrix[orig][dest.name] : null;
     if (res && res.Mtotal > maxDemand) maxDemand = res.Mtotal;
   });
   if (maxDemand === 0) maxDemand = 1;
 
-  const barHeight = Math.min(24, (chartH / destCities.length) * 0.65);
-  const rowStep = chartH / destCities.length;
-
-  // Y軸都市名 ＆ 棒グラフ描画
+  // Y軸都市名 ＆ 積み上げ棒グラフ描画
   destCities.forEach((dest, idx) => {
-    const yCenter = paddingTop + (idx + 0.5) * rowStep;
+    const yCenter = paddingTop + (idx + 0.5) * rowHeight;
     const yTop = yCenter - barHeight / 2;
 
-    ctx.fillStyle = "#aaa";
-    ctx.font = "10px sans-serif";
+    // Y軸都市名（固定フォント）
+    ctx.fillStyle = "#cccccc";
+    ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "right";
-    ctx.fillText(dest.name, paddingLeft - 6, yCenter + 3);
+    ctx.fillText(dest.name, paddingLeft - 6, yCenter + fontSize * 0.35);
 
-    const res = odResultsMatrix[orig][dest.name];
+    const res = odResultsMatrix[orig] ? odResultsMatrix[orig][dest.name] : null;
     if (!res || !res.modes || res.modes.length === 0) return;
 
     let currentX = paddingLeft;
@@ -467,11 +475,11 @@ function renderSingleCityBarChart(orig) {
       }
     });
 
-    // 数値ラベル
+    // 右端の需要数値（固定フォント）
     ctx.fillStyle = "#60a5fa";
-    ctx.font = "9px sans-serif";
+    ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(res.Mtotal.toFixed(1), currentX + 4, yCenter + 3);
+    ctx.fillText(res.Mtotal.toFixed(1), currentX + 5, yCenter + fontSize * 0.35);
   });
 }
 
