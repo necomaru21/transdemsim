@@ -213,9 +213,7 @@ function calculate() {
   renderOdFilterControls();
   renderOdMatrixTable();
   renderCrossSectionChart();
-  if (typeof renderSingleCityAnalysis === "function") {
-    renderSingleCityAnalysis();
-  }
+  renderSingleCityAnalysis();
 
   saveToLocalStorage();
 }
