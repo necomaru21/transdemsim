@@ -270,7 +270,115 @@ function toggleChartMode(modeName) {
       }
     }
   }
-  renderCrossSectionChart();
+  renderBoardingAlightingChart();
+renderCrossSectionChart();
+}
+
+// ==========================================
+// 各駅乗降客数グラフ描画 (乗車: 青 / 降車: 赤)
+// ==========================================
+function renderBoardingAlightingChart() {
+  const canvas = document.getElementById("boardingAlightingCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio || 300;
+  canvas.height = rect.height * window.devicePixelRatio || 180;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const width = rect.width;
+  const height = rect.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  if (!cities || cities.length === 0) return;
+
+  // 1. フィルタ有効なモードAの抽出 (断面交通量と同じ判定基準)
+  let allActiveModeA = modeA.filter((m) => m.enabled);
+  let activeModeA = allActiveModeA.filter((m) => !disabledChartModes.has(m.name));
+
+  // 2. 各都市の乗車数(boardings)・降車数(alightings)の集計
+  let boardings = cities.map(() => 0);
+  let alightings = cities.map(() => 0);
+
+  activeModeA.forEach((mA) => {
+    for (let i = 0; i < cities.length; i++) {
+      for (let j = 0; j < cities.length; j++) {
+        if (i === j) continue;
+        const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
+        if (res && res.modes && res.modes.length > 0) {
+          const mMatch = res.modes.find((m) => m.name === mA.name);
+          if (mMatch && typeof mMatch.demand === "number" && !isNaN(mMatch.demand)) {
+            boardings[i] += mMatch.demand;  // 起点都市 i で乗車
+            alightings[j] += mMatch.demand; // 終点都市 j で降車
+          }
+        }
+      }
+    }
+  });
+
+  // 3. 描画エリアの設定 (断面交通量グラフと X 軸位置を統一)
+  const paddingLeft = 35;
+  const paddingBottom = 30;
+  const paddingTop = 15;
+  const paddingRight = 10;
+  const chartW = width - paddingLeft - paddingRight;
+  const chartH = height - paddingTop - paddingBottom;
+
+  let maxVal = Math.max(...boardings, ...alightings);
+  if (maxVal === 0) maxVal = 1;
+
+  // Y軸・枠線の描画
+  ctx.strokeStyle = "#333333";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingLeft, paddingTop);
+  ctx.lineTo(paddingLeft, height - paddingBottom);
+  ctx.lineTo(width - paddingRight, height - paddingBottom);
+  ctx.stroke();
+
+  // Y軸目盛り
+  ctx.fillStyle = "#888888";
+  ctx.font = "9px sans-serif";
+  ctx.textAlign = "right";
+  ctx.fillText(maxVal.toFixed(0), paddingLeft - 4, paddingTop + 8);
+  ctx.fillText((maxVal / 2).toFixed(0), paddingLeft - 4, paddingTop + chartH / 2 + 3);
+  ctx.fillText("0", paddingLeft - 4, height - paddingBottom);
+
+  // X軸目盛り・棒グラフの描画
+  const numCities = cities.length;
+  const stepX = chartW / numCities;
+  const barWidth = Math.min(stepX * 0.35, 12); // 1つの棒の太さ
+
+  cities.forEach((c, idx) => {
+    const centerX = paddingLeft + (idx + 0.5) * stepX;
+
+    // X軸ラベル (都市名)
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#888888";
+    ctx.fillText(c.name, centerX, height - paddingBottom + 14);
+
+    // 青棒: 乗車数 (左側)
+    const bHeight = (boardings[idx] / maxVal) * chartH;
+    ctx.fillStyle = "#2b5c8f";
+    ctx.fillRect(
+      centerX - barWidth,
+      height - paddingBottom - bHeight,
+      barWidth - 1,
+      bHeight
+    );
+
+    // 赤棒: 降車数 (右側)
+    const aHeight = (alightings[idx] / maxVal) * chartH;
+    ctx.fillStyle = "#d9534f";
+    ctx.fillRect(
+      centerX,
+      height - paddingBottom - aHeight,
+      barWidth - 1,
+      aHeight
+    );
+  });
 }
 
 function renderCrossSectionChart() {
