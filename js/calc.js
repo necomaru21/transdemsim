@@ -166,6 +166,7 @@ function calculate() {
             Tk: Tk,
             color: mB.color || "#f59e0b",
           });
+          
         }
       });
 
@@ -205,19 +206,11 @@ function calculate() {
           modes: availableModes,
         };
       }
-    }
-  }
-
-  // 描画およびグラフ・OD表のリアルタイム同期
+   // 描画およびグラフ・OD表のリアルタイム同期
   updatePairAnalysis();
   renderOdFilterControls();
   renderOdMatrixTable();
   renderCrossSectionChart();
-  
-  // ★ 追加: 1都市起点需要・バブルチャートのリアルタイム同期
-  if (typeof renderSingleCityAnalysis === "function") {
-    renderSingleCityAnalysis();
-  }
 
   saveToLocalStorage();
 }
