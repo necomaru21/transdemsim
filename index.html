@@ -319,7 +319,7 @@
 
       .chart-container {
         width: 100%;
-        height: auto;
+        height: 180px;
         position: relative;
         margin-top: 10px;
       }
@@ -983,9 +983,11 @@
 
           <!-- 横向き積み上げ棒グラフ -->
           <div style="font-size: 10px; color: #999; margin-bottom: 4px;">各目的地都市への需要量とモード別内訳</div>
-          <div class="chart-container" style="height: 200px; margin-bottom: 16px;">
-            <canvas id="singleCityBarCanvas"></canvas>
+          <div class="chart-container" style="height: auto; min-height: 100px; margin-bottom: 16px;">
+            <!-- ★ style="height: 100% !important;" を削除し、width のみに修正 -->
+            <canvas id="singleCityBarCanvas" style="width: 100%;"></canvas>
           </div>
+
   
           <!-- バブルチャート -->
           <div style="font-size: 10px; color: #999; margin-bottom: 4px;">目的地都市別の需要構造（横軸:時間距離, 縦軸:移動需要, 円サイズ:相手ポテンシャル）</div>
