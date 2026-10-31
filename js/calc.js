@@ -166,7 +166,6 @@ function calculate() {
             Tk: Tk,
             color: mB.color || "#f59e0b",
           });
-          
         }
       });
 
@@ -206,7 +205,10 @@ function calculate() {
           modes: availableModes,
         };
       }
-   // 描画およびグラフ・OD表のリアルタイム同期
+    }
+  }
+
+  // 描画およびグラフ・OD表のリアルタイム同期
   updatePairAnalysis();
   renderOdFilterControls();
   renderOdMatrixTable();
