@@ -274,8 +274,29 @@ function toggleChartMode(modeName) {
 renderCrossSectionChart();
 }
 
+// 方向管理変数 ('up' または 'down')
+let currentDirection = 'up';
+
+// 方向切り替え関数
+function switchDirection(dir) {
+  currentDirection = dir;
+  
+  // ボタンの見た目更新
+  const btnUp = document.getElementById("btnDirUp");
+  const btnDown = document.getElementById("btnDirDown");
+  if (btnUp && btnDown) {
+    btnUp.style.background = dir === 'up' ? '#2b5c8f' : '#444';
+    btnUp.style.color = dir === 'up' ? '#fff' : '#ccc';
+    btnDown.style.background = dir === 'down' ? '#2b5c8f' : '#444';
+    btnDown.style.color = dir === 'down' ? '#fff' : '#ccc';
+  }
+
+  // 描画更新
+  renderBoardingAlightingChart();
+}
+
 // ==========================================
-// 各駅乗降客数グラフ描画 (乗車: 青 / 降車: 赤)
+// 各駅乗降客数グラフ描画 (方向別: 上り / 下り)
 // ==========================================
 function renderBoardingAlightingChart() {
   const canvas = document.getElementById("boardingAlightingCanvas");
@@ -294,11 +315,11 @@ function renderBoardingAlightingChart() {
 
   if (!cities || cities.length === 0) return;
 
-  // 1. フィルタ有効なモードAの抽出 (断面交通量と同じ判定基準)
+  // 1. フィルタ有効なモードAの抽出
   let allActiveModeA = modeA.filter((m) => m.enabled);
   let activeModeA = allActiveModeA.filter((m) => !disabledChartModes.has(m.name));
 
-  // 2. 各都市の乗車数(boardings)・降車数(alightings)の集計
+  // 2. 各都市の乗車数(boardings)・降車数(alightings)の集計 (方向条件付き)
   let boardings = cities.map(() => 0);
   let alightings = cities.map(() => 0);
 
@@ -306,6 +327,11 @@ function renderBoardingAlightingChart() {
     for (let i = 0; i < cities.length; i++) {
       for (let j = 0; j < cities.length; j++) {
         if (i === j) continue;
+
+        // 方向判定: upなら i < j (上り), downなら i > j (下り)
+        const isTargetDir = currentDirection === 'up' ? (i < j) : (i > j);
+        if (!isTargetDir) continue;
+
         const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
         if (res && res.modes && res.modes.length > 0) {
           const mMatch = res.modes.find((m) => m.name === mA.name);
@@ -318,7 +344,7 @@ function renderBoardingAlightingChart() {
     }
   });
 
-  // 3. 描画エリアの設定 (断面交通量グラフと X 軸位置を統一)
+  // 3. 描画エリアの設定
   const paddingLeft = 35;
   const paddingBottom = 30;
   const paddingTop = 15;
@@ -329,7 +355,7 @@ function renderBoardingAlightingChart() {
   let maxVal = Math.max(...boardings, ...alightings);
   if (maxVal === 0) maxVal = 1;
 
-  // Y軸・枠線の描画
+  // Y軸・枠線
   ctx.strokeStyle = "#333333";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -349,7 +375,7 @@ function renderBoardingAlightingChart() {
   // X軸目盛り・棒グラフの描画
   const numCities = cities.length;
   const stepX = chartW / numCities;
-  const barWidth = Math.min(stepX * 0.35, 12); // 1つの棒の太さ
+  const barWidth = Math.min(stepX * 0.35, 12);
 
   cities.forEach((c, idx) => {
     const centerX = paddingLeft + (idx + 0.5) * stepX;
