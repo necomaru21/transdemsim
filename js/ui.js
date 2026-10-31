@@ -646,7 +646,10 @@ function syncCitySelects() {
   if (sDest) sDest.value = destVal;
   if (sSingle) {
     sSingle.value = singleVal;
-    renderSingleCityAnalysis();
+    // エラー防止のため、関数が存在する場合のみ安全に実行
+    if (typeof renderSingleCityAnalysis === "function") {
+      renderSingleCityAnalysis();
+    }
   }
 }
 
