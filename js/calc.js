@@ -214,6 +214,10 @@ function calculate() {
   renderOdMatrixTable();
   renderCrossSectionChart();
 
+if (typeof renderSingleCityAnalysis === "function") {
+    renderSingleCityAnalysis();
+  }
+
   saveToLocalStorage();
 }
 
