@@ -627,8 +627,12 @@ function syncCityNames() {
 function saveSelectState() {
   const sOrig = document.getElementById("selectOrig");
   const sDest = document.getElementById("selectDest");
-  if (sOrig && sOrig.value) localStorage.setItem("transdemsim_selectOrig", sOrig.value);
-  if (sDest && sDest.value) localStorage.setItem("transdemsim_selectDest", sDest.value);
+  if (sOrig && sOrig.value) {
+    localStorage.setItem("transdemsim_selectOrig", sOrig.value);
+  }
+  if (sDest && sDest.value) {
+    localStorage.setItem("transdemsim_selectDest", sDest.value);
+  }
 }
 
 // セレクトボックスの同期・初期化処理
@@ -653,11 +657,11 @@ function syncCitySelects() {
   const defaultOrig = cities[0].name;
   const defaultDest = cities[cities.length - 1].name;
 
-  // 2. 現在の選択値、または localStorage に保存されていた値を優先取得
+  // 2. 現在画面で選ばれている値を最優先。なければ Storage、それでもなければデフォルト
   const savedOrig = localStorage.getItem("transdemsim_selectOrig");
   const savedDest = localStorage.getItem("transdemsim_selectDest");
 
-  // DOMに値があればそれを最優先、なければ保存値、それもなければデフォルト値
+  // DOM上に現在選択されている値があれば最優先（sOrig.value）
   const targetOrig = sOrig.value || savedOrig || defaultOrig;
   const targetDest = sDest.value || savedDest || defaultDest;
 
@@ -670,21 +674,21 @@ function syncCitySelects() {
     sDest.innerHTML += `<option value="${c.name}">${c.name}</option>`;
   });
 
-  // 4. 起点都市の確定（指定都市が cities 内に存在すればセット、なければ先頭都市）
+  // 4. 起点都市の確定（指定値が cities 内に存在すればセット、なければ先頭都市）
   if (cities.some((c) => c.name === targetOrig)) {
     sOrig.value = targetOrig;
   } else {
     sOrig.value = defaultOrig;
   }
 
-  // 5. 終点都市の確定（指定都市が cities 内に存在すればセット、なければ末尾都市）
+  // 5. 終点都市の確定（指定値が cities 内に存在すればセット、なければ末尾都市）
   if (cities.some((c) => c.name === targetDest)) {
     sDest.value = targetDest;
   } else {
     sDest.value = defaultDest;
   }
 
-  // 確定した値を保存
+  // ★確定した現在の選択状態をその場で Storage に最新化
   saveSelectState();
 
   // 6. 描画処理の呼び出し
