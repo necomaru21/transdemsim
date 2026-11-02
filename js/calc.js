@@ -42,6 +42,115 @@ function getPathMinFreq(mA, origIdx, destIdx) {
   return minFreq === Infinity || isNaN(minFreq) ? 0 : minFreq;
 }
 
+// ==========================================
+// 乗継マトリクス (最大2回乗継対応・同一モード乗継許可)
+// ==========================================
+function calculateTransferMatrix() {
+  const transferMatrix = {};
+
+  cities.forEach((origCity) => {
+    transferMatrix[origCity.name] = {};
+
+    cities.forEach((destCity) => {
+      if (origCity.name === destCity.name) {
+        transferMatrix[origCity.name][destCity.name] = { time: null, freq: null };
+        return;
+      }
+
+      // 直行便の最速時間 (存在しなければ Infinity)
+      const directMinTime = getDirectMinTime(origCity.name, destCity.name);
+
+      let bestTime = Infinity;
+      let bestFreq = null;
+
+      // ----------------------------------------------------
+      // 1. 1回乗継の探索 (orig -> k1 -> dest)
+      // ----------------------------------------------------
+      cities.forEach((k1) => {
+        if (k1.name === origCity.name || k1.name === destCity.name) return;
+
+        modeA.forEach((m1) => {
+          if (!m1.enabled) return;
+          const t1 = getModeTime(m1, origCity.name, k1.name);
+          const f1 = Number(m1.frequency || m1.freq || 0);
+          if (t1 === null || f1 <= 0) return;
+
+          modeA.forEach((m2) => {
+            if (!m2.enabled) return; // ★ 同一モード(m1.name === m2.name)の乗継も許可
+            const t2 = getModeTime(m2, k1.name, destCity.name);
+            const f2 = Number(m2.frequency || m2.freq || 0);
+            if (t2 === null || f2 <= 0) return;
+
+            // 乗継待ち時間 = 30 / 後続本数
+            const wait1 = 30 / f2;
+            const totalT = t1 + wait1 + t2;
+
+            if (totalT < directMinTime && totalT < bestTime) {
+              bestTime = totalT;
+              bestFreq = Math.min(f1, f2);
+            }
+          });
+        });
+      });
+
+      // ----------------------------------------------------
+      // 2. 2回乗継の探索 (orig -> k1 -> k2 -> dest)
+      // ----------------------------------------------------
+      cities.forEach((k1) => {
+        if (k1.name === origCity.name || k1.name === destCity.name) return;
+
+        cities.forEach((k2) => {
+          if (k2.name === origCity.name || k2.name === destCity.name || k2.name === k1.name) return;
+
+          modeA.forEach((m1) => {
+            if (!m1.enabled) return;
+            const t1 = getModeTime(m1, origCity.name, k1.name);
+            const f1 = Number(m1.frequency || m1.freq || 0);
+            if (t1 === null || f1 <= 0) return;
+
+            modeA.forEach((m2) => {
+              if (!m2.enabled) return;
+              const t2 = getModeTime(m2, k1.name, k2.name);
+              const f2 = Number(m2.frequency || m2.freq || 0);
+              if (t2 === null || f2 <= 0) return;
+
+              modeA.forEach((m3) => {
+                if (!m3.enabled) return; // ★ 制限解除
+                const t3 = getModeTime(m3, k2.name, destCity.name);
+                const f3 = Number(m3.frequency || m3.freq || 0);
+                if (t3 === null || f3 <= 0) return;
+
+                const wait1 = 30 / f2;
+                const wait2 = 30 / f3;
+                const totalT = t1 + wait1 + t2 + wait2 + t3;
+
+                if (totalT < directMinTime && totalT < bestTime) {
+                  bestTime = totalT;
+                  bestFreq = Math.min(f1, f2, f3);
+                }
+              });
+            });
+          });
+        });
+      });
+
+      // ----------------------------------------------------
+      // 格納処理
+      // ----------------------------------------------------
+      if (bestTime < Infinity) {
+        transferMatrix[origCity.name][destCity.name] = {
+          time: bestTime,
+          freq: bestFreq
+        };
+      } else {
+        transferMatrix[origCity.name][destCity.name] = { time: null, freq: null };
+      }
+    });
+  });
+
+  return transferMatrix;
+}
+
 // --- 需要計算コアロジック ---
 function calculate() {
   const K = Number(document.getElementById("paramK").value) || 0.04;
