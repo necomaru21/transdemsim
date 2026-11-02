@@ -194,6 +194,18 @@ const defaultModeA = [
     overrideTravel: {},
     overrideFreq: {},
   },
+  {
+    name: "乗継", // 固定名称としてシステムで識別
+    enabled: true,
+    accessTime: 0,
+    useShortPenalty: true,
+    color: "#64748b", // スレートグレー
+    isTransferMode: true, // 乗継専用モードフラグ
+    stations: [], // 自動計算のため不要
+    segmentFreqs: [], // 自動計算のため不要
+    overrideTravel: {},
+    overrideFreq: {},
+  },
 ];
 
 // 【新規追加】デフォルト空港マスター
@@ -413,7 +425,27 @@ function loadFromLocalStorage() {
     }
 
     if (state.cities && Array.isArray(state.cities)) cities = state.cities;
-    if (state.modeA && Array.isArray(state.modeA)) modeA = state.modeA;
+
+    if (state.modeA && Array.isArray(state.modeA)) {
+      modeA = state.modeA;
+      // ★ 旧バージョン互換: 「乗継」モードが存在しない場合は自動追加
+      const hasTransfer = modeA.some((m) => m.isTransferMode || m.name === "乗継");
+      if (!hasTransfer) {
+        modeA.push({
+          name: "乗継",
+          enabled: true,
+          accessTime: 0,
+          useShortPenalty: true,
+          color: "#64748b",
+          isTransferMode: true,
+          stations: [],
+          segmentFreqs: [],
+          overrideTravel: {},
+          overrideFreq: {},
+        });
+      }
+    }
+
     if (state.airports && Array.isArray(state.airports)) airports = state.airports;
     if (state.airportAccess) airportAccess = state.airportAccess;
     if (state.airportRoutes && Array.isArray(state.airportRoutes)) airportRoutes = state.airportRoutes;
@@ -504,7 +536,27 @@ function importConfig(event) {
       }
 
       if (config.cities && Array.isArray(config.cities)) cities = config.cities;
-      if (config.modeA && Array.isArray(config.modeA)) modeA = config.modeA;
+
+      if (config.modeA && Array.isArray(config.modeA)) {
+        modeA = config.modeA;
+        // ★ 旧バージョン互換: 「乗継」モードが存在しない場合は自動追加
+        const hasTransfer = modeA.some((m) => m.isTransferMode || m.name === "乗継");
+        if (!hasTransfer) {
+          modeA.push({
+            name: "乗継",
+            enabled: true,
+            accessTime: 0,
+            useShortPenalty: true,
+            color: "#64748b",
+            isTransferMode: true,
+            stations: [],
+            segmentFreqs: [],
+            overrideTravel: {},
+            overrideFreq: {},
+          });
+        }
+      }
+
       if (config.airports && Array.isArray(config.airports)) airports = config.airports;
       if (config.airportAccess) airportAccess = config.airportAccess;
       if (config.airportRoutes && Array.isArray(config.airportRoutes)) airportRoutes = config.airportRoutes;

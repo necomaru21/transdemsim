@@ -42,6 +42,174 @@ function getPathMinFreq(mA, origIdx, destIdx) {
   return minFreq === Infinity || isNaN(minFreq) ? 0 : minFreq;
 }
 
+// ==========================================
+// ヘルパー: 指定モードの直行所要時間(分)を取得
+// ==========================================
+function getModeDirectTime(mA, cOrigName, cDestName) {
+  if (mA.overrideTravel && mA.overrideTravel[cOrigName] && mA.overrideTravel[cOrigName][cDestName] !== undefined) {
+    return mA.overrideTravel[cOrigName][cDestName];
+  } else if (
+    mA.overrideTravel &&
+    mA.overrideTravel[cDestName] &&
+    mA.overrideTravel[cDestName][cOrigName] !== undefined
+  ) {
+    return mA.overrideTravel[cDestName][cOrigName];
+  } else if (mA.stations) {
+    const stOrig = mA.stations.find((s) => s.cityName === cOrigName);
+    const stDest = mA.stations.find((s) => s.cityName === cDestName);
+    if (
+      stOrig &&
+      stDest &&
+      stOrig.travel !== null &&
+      stOrig.travel !== undefined &&
+      stDest.travel !== null &&
+      stDest.travel !== undefined
+    ) {
+      return Math.abs(stDest.travel - stOrig.travel);
+    }
+  }
+  return null;
+}
+
+// ==========================================
+// ヘルパー: 乗継なし直行便の最速時間を取得
+// ==========================================
+function getDirectMinTime(cOrigName, cDestName) {
+  let minTime = Infinity;
+  modeA.forEach((mA) => {
+    if (!mA.enabled || mA.isTransferMode) return;
+    const t = getModeDirectTime(mA, cOrigName, cDestName);
+    if (t !== null && t > 0) {
+      const origIdx = cities.findIndex((c) => c.name === cOrigName);
+      const destIdx = cities.findIndex((c) => c.name === cDestName);
+      const f = getPathMinFreq(mA, origIdx, destIdx);
+      if (f > 0 && t < minTime) minTime = t;
+    }
+  });
+  return minTime;
+}
+
+// ==========================================
+// 乗継マトリクス (高速枝刈り付き・最大2回乗継対応) 自動計算
+// ==========================================
+window.transferMatrixResults = {};
+function calculateTransferMatrix() {
+  const resultMatrix = {};
+
+  if (!cities || cities.length === 0) return resultMatrix;
+
+  const N = cities.length;
+
+  // 1. 全都市間の「モード別最速所要時間・最大本数」を前処理でキャッシュ (ルックアップの高速化)
+  // fastPairTime[origIdx][destIdx] = { minTime, maxFreq, bestModeIdx }
+  const fastPair = Array.from({ length: N }, () => Array(N).fill(null));
+
+  for (let u = 0; u < N; u++) {
+    for (let v = 0; v < N; v++) {
+      if (u === v) continue;
+      let minT = Infinity;
+      let maxF = 0;
+      modeA.forEach((mA) => {
+        if (!mA.enabled || mA.isTransferMode) return;
+        const t = getModeDirectTime(mA, cities[u].name, cities[v].name);
+        const f = getPathMinFreq(mA, u, v);
+        if (t !== null && t > 0 && f > 0) {
+          if (t < minT) {
+            minT = t;
+            maxF = f;
+          }
+        }
+      });
+      if (minT < Infinity) {
+        fastPair[u][v] = { time: minT, freq: maxF };
+      }
+    }
+  }
+
+  // 2. 各ODペアの乗継計算
+  cities.forEach((cOrig, i) => {
+    resultMatrix[cOrig.name] = {};
+
+    cities.forEach((cDest, j) => {
+      if (i === j) {
+        resultMatrix[cOrig.name][cDest.name] = { time: null, freq: null };
+        return;
+      }
+
+      // 直行便が存在する場合の最速時間
+      const directMinTime = getDirectMinTime(cOrig.name, cDest.name);
+      let bestTime = directMinTime;
+      let bestFreq = null;
+
+      // --- A. 1回乗継の探索 (i -> k1 -> j) ---
+      for (let k1 = 0; k1 < N; k1++) {
+        if (k1 === i || k1 === j) continue;
+
+        const p1 = fastPair[i][k1];
+        if (!p1) continue;
+        // 枝刈り 1: 最初の1区間だけで直行最速を超えていたらスキップ
+        if (p1.time >= bestTime) continue;
+
+        const p2 = fastPair[k1][j];
+        if (!p2) continue;
+
+        const wait1 = 30 / p2.freq; // 乗り継ぎ待ち時間推定
+        const totalT = p1.time + wait1 + p2.time;
+
+        if (totalT < bestTime) {
+          bestTime = totalT;
+          bestFreq = Math.min(p1.freq, p2.freq);
+        }
+      }
+
+      // --- B. 2回乗継の探索 (i -> k1 -> k2 -> j) ---
+      for (let k1 = 0; k1 < N; k1++) {
+        if (k1 === i || k1 === j) continue;
+
+        const p1 = fastPair[i][k1];
+        if (!p1) continue;
+        // 枝刈り 1: 1区間目で既に不採用決定ならスキップ
+        if (p1.time >= bestTime) continue;
+
+        for (let k2 = 0; k2 < N; k2++) {
+          if (k2 === i || k2 === j || k2 === k1) continue;
+
+          const p2 = fastPair[k1][k2];
+          if (!p2) continue;
+
+          // 枝刈り 2: 2区間目までの合計所要時間で判断 (進行方向の判定・寄り道スキップ)
+          const wait1 = 30 / p2.freq;
+          const sumT12 = p1.time + wait1 + p2.time;
+          if (sumT12 >= bestTime) continue;
+
+          const p3 = fastPair[k2][j];
+          if (!p3) continue;
+
+          const wait2 = 30 / p3.freq;
+          const totalT = sumT12 + wait2 + p3.time;
+
+          if (totalT < bestTime) {
+            bestTime = totalT;
+            bestFreq = Math.min(p1.freq, p2.freq, p3.freq);
+          }
+        }
+      }
+
+      // 結果の格納
+      if (bestTime < Infinity) {
+        resultMatrix[cOrig.name][cDest.name] = {
+          time: Number(bestTime.toFixed(1)),
+          freq: bestFreq,
+        };
+      } else {
+        resultMatrix[cOrig.name][cDest.name] = { time: null, freq: null };
+      }
+    });
+  });
+
+  return resultMatrix;
+}
+
 // --- 需要計算コアロジック ---
 function calculate() {
   const K = Number(document.getElementById("paramK").value) || 0.04;
@@ -57,6 +225,8 @@ function calculate() {
   const paramPElem = document.getElementById("paramP");
   const Tstart = TstartElem ? Number(TstartElem.value) || 120 : 120;
   const paramP = paramPElem ? Number(paramPElem.value) || 1.0 : 1.0;
+
+  window.transferMatrixResults = calculateTransferMatrix();
 
   odResultsMatrix = {};
 
@@ -83,16 +253,41 @@ function calculate() {
         if (!mA.enabled) return;
 
         let minFreq = 0;
-        if (mA.overrideFreq && mA.overrideFreq[cOrig.name] && mA.overrideFreq[cOrig.name][cDest.name] !== undefined) {
-          minFreq = mA.overrideFreq[cOrig.name][cDest.name];
+        let inVehicleTime = null;
+
+        // ★ 乗継モードかどうかの判定
+        if (mA.isTransferMode || mA.name === "乗継") {
+          // 乗継の場合は自動計算値をベースに、手動上書きがあればそれを優先
+          const autoData =
+            window.transferMatrixResults[cOrig.name] && window.transferMatrixResults[cOrig.name][cDest.name]
+              ? window.transferMatrixResults[cOrig.name][cDest.name]
+              : { time: null, freq: null };
+
+          const overFreq =
+            mA.overrideFreq && mA.overrideFreq[cOrig.name] && mA.overrideFreq[cOrig.name][cDest.name] !== undefined
+              ? mA.overrideFreq[cOrig.name][cDest.name]
+              : null;
+          minFreq = overFreq !== null ? overFreq : autoData.freq !== null ? autoData.freq : 0;
+
+          const overTravel =
+            mA.overrideTravel &&
+            mA.overrideTravel[cOrig.name] &&
+            mA.overrideTravel[cOrig.name][cDest.name] !== undefined
+              ? mA.overrideTravel[cOrig.name][cDest.name]
+              : mA.overrideTravel &&
+                  mA.overrideTravel[cDest.name] &&
+                  mA.overrideTravel[cDest.name][cOrig.name] !== undefined
+                ? mA.overrideTravel[cDest.name][cOrig.name]
+                : null;
+          inVehicleTime = overTravel !== null ? overTravel : autoData.time;
         } else {
-          minFreq = getPathMinFreq(mA, i, j);
-        }
+          // 従来の直行便モード処理
+          if (mA.overrideFreq && mA.overrideFreq[cOrig.name] && mA.overrideFreq[cOrig.name][cDest.name] !== undefined) {
+            minFreq = mA.overrideFreq[cOrig.name][cDest.name];
+          } else {
+            minFreq = getPathMinFreq(mA, i, j);
+          }
 
-        if (minFreq > 0) {
-          let inVehicleTime = null;
-
-          // 1. 手動上書き（overrideTravel）を最優先で取得
           if (
             mA.overrideTravel &&
             mA.overrideTravel[cOrig.name] &&
@@ -106,7 +301,6 @@ function calculate() {
           ) {
             inVehicleTime = mA.overrideTravel[cDest.name][cOrig.name];
           } else {
-            // 2. 上書きがない場合のみ、stations（簡易パネル）の始発時刻から自動計算
             const stOrig = mA.stations.find((s) => s.cityName === cOrig.name);
             const stDest = mA.stations.find((s) => s.cityName === cDest.name);
             if (
@@ -120,27 +314,27 @@ function calculate() {
               inVehicleTime = Math.abs(stDest.travel - stOrig.travel);
             }
           }
+        }
 
-          if (inVehicleTime !== null && inVehicleTime > 0) {
-            const waitTime = 60 / (2 * minFreq);
-            const accessTime = mA.accessTime || 0;
+        if (minFreq > 0 && inVehicleTime !== null && inVehicleTime > 0) {
+          const waitTime = 60 / (2 * minFreq);
+          const accessTime = mA.accessTime || 0;
 
-            let shortPenalty = 0;
-            if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
-              shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
-            }
-
-            const Tk = inVehicleTime + waitTime + accessTime + shortPenalty;
-
-            availableModes.push({
-              name: mA.name,
-              type: "A",
-              inVehicleTime: inVehicleTime,
-              freq: minFreq, // ★ 追加: 運行頻度(本/h)
-              Tk: Tk,
-              color: mA.color,
-            });
+          let shortPenalty = 0;
+          if (mA.useShortPenalty !== false && inVehicleTime < shortThreshold) {
+            shortPenalty = shortCoeff * Math.pow(shortThreshold - inVehicleTime, 2);
           }
+
+          const Tk = inVehicleTime + waitTime + accessTime + shortPenalty;
+
+          availableModes.push({
+            name: mA.name,
+            type: "A",
+            inVehicleTime: inVehicleTime,
+            freq: minFreq, // ★ 追加: 運行頻度(本/h)
+            Tk: Tk,
+            color: mA.color,
+          });
         }
       });
 
@@ -213,7 +407,7 @@ function calculate() {
   renderOdFilterControls();
   renderOdMatrixTable();
   renderBoardingAlightingChart();
-renderCrossSectionChart();
+  renderCrossSectionChart();
   renderSingleCityAnalysis();
 
   saveToLocalStorage();

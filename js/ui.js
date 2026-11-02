@@ -433,6 +433,8 @@ function renderModeA() {
         ? `<button class="btn-del" style="padding: 2px 6px; font-size: 10px;" onclick="deleteModeA(${idx})">削除</button>`
         : ``;
 
+    const displayStyle = mA.isTransferMode ? "display:none;" : "";
+
     div.innerHTML = `
     <div class="mode-item-top">
         <div style="display:flex; align-items:center; gap:6px;">
@@ -473,7 +475,7 @@ function renderModeA() {
     </div>
 
     <!-- ★ 簡易設定部分の折りたたみ -->
-    <details style="background:#181818; border:1px solid #333; border-radius:6px; padding:6px 8px;">
+    <details style="background:#181818; border:1px solid #333; border-radius:6px; padding:6px 8px; ${mA.isTransferMode ? "display:none;" : ""}">
         <summary style="font-size:10px; font-weight:bold; color:#888; cursor:pointer; user-select:none; outline:none;">
         📝 始発所要時間・区間本数の簡易入力パネル（クリックで展開）
         </summary>
@@ -496,7 +498,9 @@ function renderModeA() {
             </table>
             </div>
         </div>
-        </div>
+      </div>
+    
+
     </details>
     `;
     container.appendChild(div);
@@ -629,7 +633,7 @@ function syncCityNames() {
 function onSelectCityChange() {
   const origVal = document.getElementById("selectOrig").value;
   const destVal = document.getElementById("selectDest").value;
-  
+
   // 描画更新（charts.js の関数を直接呼ぶ）
   updatePairAnalysis();
   saveToLocalStorage();
@@ -676,6 +680,13 @@ function syncCitySelects() {
   localStorage.setItem("transdemsim_selectOrig", sOrig.value);
   localStorage.setItem("transdemsim_selectDest", sDest.value);
   updatePairAnalysis();
+}
+
+function toggleDebug() {
+  const isHidden = document.getElementById("debugPanel").classList.toggle("hidden");
+  if (!isHidden) {
+    document.getElementById("debugPanel").scrollIntoView({ behavior: "smooth" });
+  }
 }
 
 let activeColorTargetModeIdx = null;
@@ -748,7 +759,7 @@ function openMatrixModalA(modeIdx) {
 
   modalMatrixData = { travel: {}, freq: {} };
 
-  // openMatrixModalA 内の修正箇所
+  // --- `js/ui.js` 内 openMatrixModalA() のループ部分を差し替え ---
   cities.forEach((cOrig, i) => {
     modalMatrixData.travel[cOrig.name] = {};
     modalMatrixData.freq[cOrig.name] = {};
@@ -756,22 +767,35 @@ function openMatrixModalA(modeIdx) {
     cities.forEach((cDest, j) => {
       if (i === j) return;
 
-      const stOrig = mA.stations.find((s) => s.cityName === cOrig.name);
-      const stDest = mA.stations.find((s) => s.cityName === cDest.name);
+      let autoInVehicle = null;
+      let autoFreq = null;
 
-      const autoInVehicle =
-        stOrig &&
-        stDest &&
-        stOrig.travel !== null &&
-        stOrig.travel !== undefined &&
-        stDest.travel !== null &&
-        stDest.travel !== undefined
-          ? Math.abs(stDest.travel - stOrig.travel)
-          : null;
-
-      // ★ stations が null の場合は autoFreq も null として扱う（0 にしない）
-      const autoFreq =
-        stOrig && stOrig.travel !== null && stDest && stDest.travel !== null ? getPathMinFreq(mA, i, j) : null;
+      // ★ 乗継モードの場合は transferMatrixResults から自動計算値を取得
+      if (mA.isTransferMode || mA.name === "乗継") {
+        const tRes =
+          window.transferMatrixResults && window.transferMatrixResults[cOrig.name]
+            ? window.transferMatrixResults[cOrig.name][cDest.name]
+            : null;
+        if (tRes) {
+          autoInVehicle = tRes.time;
+          autoFreq = tRes.freq;
+        }
+      } else {
+        // 通常の直行モードの場合（既存ロジック）
+        const stOrig = mA.stations.find((s) => s.cityName === cOrig.name);
+        const stDest = mA.stations.find((s) => s.cityName === cDest.name);
+        autoInVehicle =
+          stOrig &&
+          stDest &&
+          stOrig.travel !== null &&
+          stOrig.travel !== undefined &&
+          stDest.travel !== null &&
+          stDest.travel !== undefined
+            ? Math.abs(stDest.travel - stOrig.travel)
+            : null;
+        autoFreq =
+          stOrig && stOrig.travel !== null && stDest && stDest.travel !== null ? getPathMinFreq(mA, i, j) : null;
+      }
 
       const overTravel =
         mA.overrideTravel && mA.overrideTravel[cOrig.name] ? mA.overrideTravel[cOrig.name][cDest.name] : undefined;

@@ -6,7 +6,7 @@ function updatePairAnalysis() {
 
   const orig = origSelect.value;
   const dest = destSelect.value;
-  
+
   const pMtotal = document.getElementById("pairMtotal");
   const pTeff = document.getElementById("pairTeff");
   const pBar = document.getElementById("pairShareBar");
@@ -64,7 +64,7 @@ function updatePairAnalysis() {
   debugLog += `・M_total: ${res.Mtotal}\n`;
 
   if (pDebug) pDebug.innerText = debugLog;
-  
+
   if (typeof renderSingleCityAnalysis === "function") {
     renderSingleCityAnalysis();
   }
@@ -271,24 +271,24 @@ function toggleChartMode(modeName) {
     }
   }
   renderBoardingAlightingChart();
-renderCrossSectionChart();
+  renderCrossSectionChart();
 }
 
 // 方向管理変数 ('up' または 'down')
-let currentDirection = 'down';
+let currentDirection = "down";
 
 // 方向切り替え関数
 function switchDirection(dir) {
   currentDirection = dir;
-  
+
   // ボタンの見た目更新
   const btnUp = document.getElementById("btnDirUp");
   const btnDown = document.getElementById("btnDirDown");
   if (btnUp && btnDown) {
-    btnUp.style.background = dir === 'up' ? '#2b5c8f' : '#444';
-    btnUp.style.color = dir === 'up' ? '#fff' : '#ccc';
-    btnDown.style.background = dir === 'down' ? '#2b5c8f' : '#444';
-    btnDown.style.color = dir === 'down' ? '#fff' : '#ccc';
+    btnUp.style.background = dir === "up" ? "#2b5c8f" : "#444";
+    btnUp.style.color = dir === "up" ? "#fff" : "#ccc";
+    btnDown.style.background = dir === "down" ? "#2b5c8f" : "#444";
+    btnDown.style.color = dir === "down" ? "#fff" : "#ccc";
   }
 
   // 描画更新
@@ -299,7 +299,7 @@ function switchDirection(dir) {
 // 各駅乗降客数グラフ描画 (方向別: 上り / 下り)
 // ==========================================
 function renderBoardingAlightingChart() {
-    const canvas = document.getElementById("boardingAlightingCanvas");
+  const canvas = document.getElementById("boardingAlightingCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
@@ -307,7 +307,7 @@ function renderBoardingAlightingChart() {
 
   // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
-  
+
   // 1都市あたり 25px を確保（画面幅より大きければスクロール化）
   const minWidthPerCity = 25;
   const calculatedWidth = Math.max(parentWidth, cities.length * minWidthPerCity);
@@ -340,7 +340,7 @@ function renderBoardingAlightingChart() {
     for (let i = 0; i < cities.length; i++) {
       for (let j = 0; j < cities.length; j++) {
         if (i === j) continue;
-        const isTargetDir = currentDirection === 'down' ? (i < j) : (i > j);
+        const isTargetDir = currentDirection === "down" ? i < j : i > j;
         if (!isTargetDir) continue;
 
         const res = odResultsMatrix[cities[i].name] ? odResultsMatrix[cities[i].name][cities[j].name] : null;
@@ -406,32 +406,18 @@ function renderBoardingAlightingChart() {
     const charHeight = 11;
     for (let charIdx = 0; charIdx < nameStr.length; charIdx++) {
       const char = nameStr[charIdx];
-      ctx.fillText(
-        char,
-        centerX,
-        height - paddingBottom + 12 + charIdx * charHeight
-      );
+      ctx.fillText(char, centerX, height - paddingBottom + 12 + charIdx * charHeight);
     }
 
     // 青棒: 乗車数
     const bHeight = (boardings[idx] / maxVal) * chartH;
     ctx.fillStyle = "#2b5c8f";
-    ctx.fillRect(
-      centerX - barWidth,
-      height - paddingBottom - bHeight,
-      barWidth - 1,
-      bHeight
-    );
+    ctx.fillRect(centerX - barWidth, height - paddingBottom - bHeight, barWidth - 1, bHeight);
 
     // 赤棒: 降車数
     const aHeight = (alightings[idx] / maxVal) * chartH;
     ctx.fillStyle = "#d9534f";
-    ctx.fillRect(
-      centerX,
-      height - paddingBottom - aHeight,
-      barWidth - 1,
-      aHeight
-    );
+    ctx.fillRect(centerX, height - paddingBottom - aHeight, barWidth - 1, aHeight);
   });
 }
 
@@ -439,7 +425,7 @@ function renderBoardingAlightingChart() {
 // 断面交通量グラフ描画 (横スクロール・縦書きラベル対応)
 // ==========================================
 function renderCrossSectionChart() {
-    const canvas = document.getElementById("crossSectionCanvas");
+  const canvas = document.getElementById("crossSectionCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
 
@@ -449,7 +435,7 @@ function renderCrossSectionChart() {
 
   // ラッパー（親DIV）の幅を取得
   const parentWidth = canvas.parentElement.clientWidth || 300;
-  
+
   // 1区間あたり 25px を確保
   const minWidthPerSec = 25;
   const calculatedWidth = Math.max(parentWidth, numSections * minWidthPerSec);
@@ -565,11 +551,7 @@ function renderCrossSectionChart() {
     const x = paddingLeft + (idx + 0.5) * stepX;
     const nameStr = sec.label || "";
     for (let charIdx = 0; charIdx < nameStr.length; charIdx++) {
-      ctx.fillText(
-        nameStr[charIdx],
-        x,
-        height - paddingBottom + 12 + charIdx * charHeight
-      );
+      ctx.fillText(nameStr[charIdx], x, height - paddingBottom + 12 + charIdx * charHeight);
     }
   });
 
@@ -636,13 +618,13 @@ function renderSingleCityBarChart(orig) {
   const destCities = cities.filter((c) => c.name !== orig);
   if (destCities.length === 0) return;
 
-  const rowHeight =18;     // 1行の高さ(px)
-  const barHeight = 10;     // 棒の太さ(px)
-  const fontSize = 9;      // フォントサイズ(px)
-  const paddingTop = 10;    // 上余白(px)
+  const rowHeight = 18; // 1行の高さ(px)
+  const barHeight = 10; // 棒の太さ(px)
+  const fontSize = 9; // フォントサイズ(px)
+  const paddingTop = 10; // 上余白(px)
   const paddingBottom = 10; // 下余白(px)
-  const paddingLeft = 80;   // 都市名エリア(px)
-  const paddingRight = 40;  // 右側数値エリア(px)
+  const paddingLeft = 80; // 都市名エリア(px)
+  const paddingRight = 40; // 右側数値エリア(px)
 
   const container = canvas.parentElement;
   const width = (container ? container.clientWidth : 0) || canvas.getBoundingClientRect().width || 300;
