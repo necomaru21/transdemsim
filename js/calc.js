@@ -43,10 +43,78 @@ function getPathMinFreq(mA, origIdx, destIdx) {
 }
 
 // ==========================================
-// 乗継マトリクス (最大2回乗継対応・同一モード乗継許可)
+// ヘルパー関数: 指定モードの区間所要時間(分)を取得
+// ==========================================
+function getModeTime(modeObj, origName, destName) {
+  if (!modeObj || !modeObj.enabled) return null;
+
+  // 1. 簡易入力(travelTime)がある場合
+  if (typeof modeObj.travelTime === "number" && modeObj.travelTime > 0) {
+    // 隣接区間チェック等の判定、またはOD詳細マトリクスから取得
+  }
+
+  // 2. OD詳細マトリクス(odMatrix)から参照する標準的な構造
+  if (modeObj.odMatrix && modeObj.odMatrix[origName] && modeObj.odMatrix[origName][destName]) {
+    const val = modeObj.odMatrix[origName][destName];
+    if (typeof val === "number" && val > 0) return val;
+  }
+
+  return null;
+}
+
+// ==========================================
+// ヘルパー関数: 直行便（乗り換えなし）の最速時間を取得
+// ==========================================
+function getDirectMinTime(origName, destName) {
+  let minTime = Infinity;
+
+  modeA.forEach((mA) => {
+    if (!mA.enabled) return;
+    const t = getModeTime(mA, origName, destName);
+    const f = Number(mA.frequency || mA.freq || 0);
+    if (t !== null && f > 0 && t < minTime) {
+      minTime = t;
+    }
+  });
+
+  return minTime;
+}
+
+// 手動上書きデータを保持するオブジェクト (初期状態)
+window.customTransferMatrix = window.customTransferMatrix || {};
+
+// 有効な乗継データ（手動優先、次点で自動計算）を取得する関数
+function getEffectiveTransferData(origName, destName) {
+  const autoData = (window.transferMatrixResults && window.transferMatrixResults[origName])
+    ? window.transferMatrixResults[origName][destName]
+    : { time: null, freq: null };
+
+  const customData = (window.customTransferMatrix[origName])
+    ? window.customTransferMatrix[origName][destName]
+    : null;
+
+  const effectiveTime = (customData && customData.time !== undefined && customData.time !== null)
+    ? customData.time
+    : autoData.time;
+
+  const effectiveFreq = (customData && customData.freq !== undefined && customData.freq !== null)
+    ? customData.freq
+    : autoData.freq;
+
+  return {
+    time: effectiveTime,
+    freq: effectiveFreq,
+    isCustom: customData && (customData.time !== null || customData.freq !== null)
+  };
+}
+
+// ==========================================
+// 乗継マトリクス (最大2回乗継対応) 自動計算関数
 // ==========================================
 function calculateTransferMatrix() {
   const transferMatrix = {};
+
+  if (!cities || cities.length === 0) return transferMatrix;
 
   cities.forEach((origCity) => {
     transferMatrix[origCity.name] = {};
@@ -76,12 +144,12 @@ function calculateTransferMatrix() {
           if (t1 === null || f1 <= 0) return;
 
           modeA.forEach((m2) => {
-            if (!m2.enabled) return; // ★ 同一モード(m1.name === m2.name)の乗継も許可
+            if (!m2.enabled) return;
             const t2 = getModeTime(m2, k1.name, destCity.name);
             const f2 = Number(m2.frequency || m2.freq || 0);
             if (t2 === null || f2 <= 0) return;
 
-            // 乗継待ち時間 = 30 / 後続本数
+            // 乗継待ち時間 (分) = 30 / 後続モード本数
             const wait1 = 30 / f2;
             const totalT = t1 + wait1 + t2;
 
@@ -115,7 +183,7 @@ function calculateTransferMatrix() {
               if (t2 === null || f2 <= 0) return;
 
               modeA.forEach((m3) => {
-                if (!m3.enabled) return; // ★ 制限解除
+                if (!m3.enabled) return;
                 const t3 = getModeTime(m3, k2.name, destCity.name);
                 const f3 = Number(m3.frequency || m3.freq || 0);
                 if (t3 === null || f3 <= 0) return;
@@ -135,11 +203,11 @@ function calculateTransferMatrix() {
       });
 
       // ----------------------------------------------------
-      // 格納処理
+      // 結果の格納
       // ----------------------------------------------------
       if (bestTime < Infinity) {
         transferMatrix[origCity.name][destCity.name] = {
-          time: bestTime,
+          time: Number(bestTime.toFixed(1)),
           freq: bestFreq
         };
       } else {
@@ -186,6 +254,8 @@ function calculate() {
       }
 
       let availableModes = [];
+      // 1. 乗継マトリクスの更新
+  window.transferMatrixResults = calculateTransferMatrix();
 
       // --- 1. モードA（路線型）の探索 ---
       modeA.forEach((mA) => {
