@@ -494,7 +494,7 @@ function exportConfig() {
   const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
   const safeSimName = simName.replace(/[\\/:*?"<>|]/g, "_");
-  const fileName = `traffic_config_${safeSimName}_${dateStr}.json`;
+  const fileName = `${safeSimName}_${dateStr}.json`;
 
   const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
